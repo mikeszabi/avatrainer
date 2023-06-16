@@ -7,7 +7,7 @@ import argparse
 import datetime
 import cv2
 import os
-import ZEDutils
+import zed_wrapper
 
 class ZED_video_player:
     def __init__(self, output_dir = "../store"):
@@ -18,6 +18,9 @@ class ZED_video_player:
         # self.current_image = None  # current image from the camera
         self.thread = None
         self.stopEvent = None
+        self.rt_frame_counter=0
+        self.rt_time_counter=0
+        self.now=datetime.datetime.now()
         self.frame_counter=0
 
 
@@ -69,15 +72,25 @@ class ZED_video_player:
         self.rt_timer = tk.Label(self.root, height = 2, width = 30)
         self.rt_timer.grid(row=3, column=1)
         
+        self.rt_save_instruction=tk.Label(self.root,text="SVO FILE NAME:",height = 2,width = 20)
+        self.rt_save_instruction.grid(row=4, column=1)
+        
+        self.rt_save_file=tk.Text(self.root,height = 2,width = 30)
+        self.rt_save_file.grid(row=4,column=2)
+        
         self.btn_starstop = tk.Button(self.root, text="Start", command=self.OnStartStop)
         self.btn_starstop.grid(row=3, column=3, rowspan=6)
         
         self.rec_timer = tk.Label(self.root, height = 2, width = 30)
         self.rec_timer.grid(row=3, column=4)
+        
+        self.file_list_box=tk.Listbox(self.root)
+        self.file_list_box.grid(row=4,column=3,columnspan=2)
+        self.RefreshFileList()
 
         
     def zed_connect(self):
-        self.zb=ZEDutils.ZED_body()
+        self.zb=zed_wrapper.ZED_body()
         
         
 
@@ -90,7 +103,8 @@ class ZED_video_player:
                     frame = self.zb.grab_image()
                     if frame is not None:  # frame captured without any errors
                         self.frame_counter+=1
-                        self.rt_timer.config(text=str(self.frame_counter))
+                        delta=datetime.datetime.now()-self.now
+                        self.rt_timer.config(text=f"{str(self.frame_counter)} : {str(delta.total_seconds())}")
                         self.current_image=frame.copy()
                         self.current_image=cv2.cvtColor(self.current_image, cv2.COLOR_BGR2RGB)
         
@@ -107,23 +121,28 @@ class ZED_video_player:
     def OnRecord(self):
         # grab the current timestamp and use it to construct the
         # output path
-        ts = datetime.datetime.now()
         # filename = "{}.jpg".format(ts.strftime("%Y-%m-%d_%H-%M-%S"))
         # filepath = os.path.sep.join((self.outputPath, filename))
         # # save the file
         # self.wci.saveStereoImage(filepath,self.isDetectionOn)
         # #self.wci.saveImage(filepath)
-        print("[INFO] saved {}".format(ts))
         if self.zb.isRecording:
             self.zb.record_end()
         else:
+            self.now=datetime.datetime.now()
+            self.frame_counter=0
+            file_name=self.rt_save_file.get('1.0','end-1c')+'_'+self.now.strftime("%Y_%m_%d_%H_%M_%S")
+            print("[INFO] saved {}".format(file_name))
+            self.zb.set_save_file_name(file_name)
             self.zb.record_start()
             
         if self.zb.isRecording:
             self.btn_record.config(bg='red')
+            self.rt_save_instruction.config(bg='red')
         else:
             self.btn_record.config(bg='green')
-            
+            self.rt_save_instruction.config(bg='green')
+           
         
         
     def OnStartStop(self):
@@ -136,6 +155,13 @@ class ZED_video_player:
         # self.wci.saveStereoImage(filepath,self.isDetectionOn)
         # #self.wci.saveImage(filepath)
         print("[INFO] saved {}".format(ts))
+        
+    def RefreshFileList(self):
+        myList = os.listdir(r'../store')
+        print(myList)
+        self.file_list_box.delete(0, tk.END)
+        for file in myList:
+            self.file_list_box.insert(tk.END, file)
         
     def onAppClose(self):
         # set the stop event, cleanup the camera, and allow the rest of

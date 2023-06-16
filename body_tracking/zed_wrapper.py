@@ -13,6 +13,7 @@ Created on Thu Jun 15 22:16:27 2023
    #https://stackoverflow.com/questions/55919337/creating-capture-button-on-window
    #https://github.com/stereolabs/self.zed-opencv/tree/master/python
 """
+import os
 import cv2
 import sys
 import pyzed.sl as sl
@@ -26,7 +27,7 @@ class ZED_body:
         # Create a Camera object
         self.zed = sl.Camera()
         
-        self.output_path=r"../store/test.svo"
+        self.output_path=r"../store"
         self.isRecording=False
     
         # Create a InitParameters object and set configuration parameters
@@ -66,7 +67,7 @@ class ZED_body:
         
         self.recordingParameters = sl.RecordingParameters()
         self.recordingParameters.compression_mode = sl.SVO_COMPRESSION_MODE.H264
-        self.recordingParameters.video_filename = self.output_path
+        self.recordingParameters.video_filename = os.path.join(self.output_path,'test.svo')
         
 
         # Enable Object Detection module
@@ -91,6 +92,10 @@ class ZED_body:
         self.bodies = sl.Objects()
         self.image = sl.Mat()
         
+    def set_save_file_name(self,file_name):
+        self.recordingParameters.video_filename = os.path.join(self.output_path,file_name+'.svo')
+        
+        
     def grab_image(self):
         # Grab an image
         if self.zed.grab() == sl.ERROR_CODE.SUCCESS:
@@ -102,8 +107,8 @@ class ZED_body:
       
             image_left_ocv = self.image.get_data()
             cv_viewer.render_2D(image_left_ocv,self.image_scale,self.bodies.object_list, self.obj_param.enable_tracking, self.obj_param.body_format)
-            print(len(self.bodies.object_list))
-            print(image_left_ocv.shape)
+            # print(len(self.bodies.object_list))
+            # print(image_left_ocv.shape)
         else:
             image_left_ocv=None
         return image_left_ocv
@@ -122,10 +127,9 @@ class ZED_body:
     
     def record_end(self):
         if self.isRecording:
-            err = self.zed.disable_recording()
-            if err == sl.ERROR_CODE.SUCCESS:
-                print("ZED is not recording")
-                self.isRecording=False
+            self.zed.disable_recording()
+            print("ZED is not recording")
+            self.isRecording=False
 
     
     def __del__(self):

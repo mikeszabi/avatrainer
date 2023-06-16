@@ -8,11 +8,11 @@ Created on Fri Jun 16 08:00:21 2023
 
 
 
-import ZEDutils
-import ZEDVideo
+import zed_wrapper
+import zed_ui
 
 # zb=ZEDutils.ZED_body()
 
 
-zp=ZEDVideo.ZED_video_player()
+zp=zed_ui.ZED_video_player()
 
