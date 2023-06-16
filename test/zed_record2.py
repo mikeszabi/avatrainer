@@ -122,15 +122,25 @@ def main() :
 
     # Create a ZED camera object
     zed = sl.Camera()
+    filepath='temp.svo'
 
     # Set configuration parameters
     input_type = sl.InputType()
-    if len(sys.argv) >= 2 :
-        input_type.set_from_svo_file(sys.argv[1])
+    # if len(sys.argv) >= 2 :
+    #     input_type.set_from_svo_file(sys.argv[1])
+    # init = sl.InitParameters(input_t=input_type)
+    # init.camera_resolution = sl.RESOLUTION.HD1080
+    # init.depth_mode = sl.DEPTH_MODE.PERFORMANCE
+    # init.coordinate_units = sl.UNIT.MILLIMETER
     init = sl.InitParameters(input_t=input_type)
-    init.camera_resolution = sl.RESOLUTION.HD1080
-    init.depth_mode = sl.DEPTH_MODE.PERFORMANCE
-    init.coordinate_units = sl.UNIT.MILLIMETER
+    init_params = sl.InitParameters()
+    init_params.camera_resolution = sl.RESOLUTION.HD1080  # Use HD1080 video mode
+    init_params.coordinate_units = sl.UNIT.METER          # Set coordinate units
+    init_params.depth_mode = sl.DEPTH_MODE.ULTRA
+    init_params.coordinate_system = sl.COORDINATE_SYSTEM.RIGHT_HANDED_Y_UP
+    init_params.svo_real_time_mode = True
+    init_params.set_from_svo_file(filepath)
+    
 
     # Open the camera
     err = zed.open(init)
