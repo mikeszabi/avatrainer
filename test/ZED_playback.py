@@ -10,7 +10,7 @@ Created on Fri Jun  9 08:44:29 2023
 import sys
 import pyzed.sl as sl
 
-input_path = r'./recorded.svo' #sys.argv[0]
+input_path = r'../store/test.svo' #sys.argv[0]
 
 
 # Create a ZED camera object

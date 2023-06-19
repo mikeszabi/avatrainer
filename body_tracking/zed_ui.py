@@ -72,10 +72,10 @@ class ZED_video_player:
         self.rt_timer = tk.Label(self.root, height = 2, width = 30)
         self.rt_timer.grid(row=3, column=1)
         
-        self.rt_save_instruction=tk.Label(self.root,text="SVO FILE NAME:",height = 2,width = 20)
+        self.rt_save_instruction=tk.Label(self.root,text="SVO FILE NAME:",height = 2,width = 20,font=('Arial',12,'bold'))
         self.rt_save_instruction.grid(row=4, column=1)
         
-        self.rt_save_file=tk.Text(self.root,height = 2,width = 30)
+        self.rt_save_file=tk.Text(self.root,height = 2,width = 60,font=('Arial',10))
         self.rt_save_file.grid(row=4,column=2)
         
         self.btn_starstop = tk.Button(self.root, text="Start", command=self.OnStartStop)
@@ -84,7 +84,7 @@ class ZED_video_player:
         self.rec_timer = tk.Label(self.root, height = 2, width = 30)
         self.rec_timer.grid(row=3, column=4)
         
-        self.file_list_box=tk.Listbox(self.root)
+        self.file_list_box=tk.Listbox(self.root,font=('Arial',12))
         self.file_list_box.grid(row=4,column=3,columnspan=2)
         self.RefreshFileList()
 
@@ -111,6 +111,7 @@ class ZED_video_player:
                         imgtk=ImageTk.PhotoImage(image=Image.fromarray(self.current_image).resize((self.disp_width,self.disp_height)))
                         self.rt_panel.imgtk = imgtk  # anchor imgtk so it does not be deleted by garbage-collector  
                         self.rt_panel.config(image=imgtk)  # show the image
+                        self.root.update()
                         #self.root.attributes("-fullscreen",True)
                     # self.root.after(1, self.video_loop)  # call the same function after 30 milliseconds
             #viewer.exit()
@@ -149,6 +150,9 @@ class ZED_video_player:
         # grab the current timestamp and use it to construct the
         # output path
         ts = datetime.datetime.now()
+        selected_file_index = self.file_list_box.curselection()[0]
+        print(self.file_list_box.get(selected_file_index))
+        self.zb.playback(os.path.join(self.output_dir,self.file_list_box.get(selected_file_index)))
         # filename = "{}.jpg".format(ts.strftime("%Y-%m-%d_%H-%M-%S"))
         # filepath = os.path.sep.join((self.outputPath, filename))
         # # save the file

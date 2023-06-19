@@ -26,6 +26,10 @@ class ZED_body:
 
         # Create a Camera object
         self.zed = sl.Camera()
+        self.zed_playback = sl.Camera()
+        
+        self.image_left_recorded_ocv=None
+        self.svo_position=0
         
         self.output_path=r"../store"
         self.isRecording=False
@@ -36,6 +40,7 @@ class ZED_body:
         init_params.coordinate_units = sl.UNIT.METER          # Set coordinate units
         #init_params.depth_mode = sl.DEPTH_MODE.ULTRA
         init_params.coordinate_system = sl.COORDINATE_SYSTEM.RIGHT_HANDED_Y_UP
+        
         
         # # If applicable, use the SVO given as parameter
         # # Otherwise use self.zed live stream
@@ -130,6 +135,32 @@ class ZED_body:
             self.zed.disable_recording()
             print("ZED is not recording")
             self.isRecording=False
+            
+    def playback(self,svo_file):
+        init_params_playback = sl.InitParameters()
+        init_params_playback.set_from_svo_file(svo_file)
+        status = self.zed_playback.open(init_params_playback)
+        if status != sl.ERROR_CODE.SUCCESS:
+            print(repr(status))
+            exit()
+
+https://www.pythontutorial.net/python-concurrency/python-threading/
+        exit_app=False
+        svo_image = sl.Mat()
+        while not exit_app:
+            print(self.svo_position)
+            
+            if self.zed_playback.grab() == sl.ERROR_CODE.SUCCESS:
+                # Read side by side frames stored in the SVO
+                self.zed_playback.retrieve_image(svo_image,  sl.VIEW.LEFT, sl.MEM.CPU, self.display_resolution)
+                # Get frame count
+                self.image_left_recorded_ocv = svo_image.get_data()
+                self.svo_position = self.zed_playback.get_svo_position();
+            elif self.zed_playback.grab() == sl.ERROR_CODE.END_OF_SVOFILE_REACHED:
+                print("SVO end has been reached. Looping back to first frame")
+                self.zed_playback.set_svo_position(0)
+                exit_app=True
+            self.zed_playback.close()
 
     
     def __del__(self):
