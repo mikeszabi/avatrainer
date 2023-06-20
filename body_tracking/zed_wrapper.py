@@ -37,6 +37,8 @@ class ZED_body:
         self.liveOn=threading.Event()
         self.liveRec=threading.Event()
         
+        self.playbackOn_right=threading.Event()
+        
         self.output_path=r"../store"
         # self.isRecording=False
     
@@ -93,47 +95,7 @@ class ZED_body:
 
         return camera_info
         
-        
-        
-    # def set_save_file_name(self,file_name):
-    #     self.recordingParameters.video_filename = os.path.join(self.output_path,file_name+'.svo')
-        
-        
-    # def grab_image(self):
-    #     # Grab an image
-    #     if self.zed.grab() == sl.ERROR_CODE.SUCCESS:
-    #         # Retrieve left image
-    #         self.zed.retrieve_image(self.image, sl.VIEW.LEFT, sl.MEM.CPU, self.display_resolution)
-    #         # Retrieve objects
-    #         self.zed.retrieve_objects(self.bodies, self.obj_runtime_param)
 
-      
-    #         image_left_ocv = self.image.get_data()
-    #         cv_viewer.render_2D(image_left_ocv,self.image_scale,self.bodies.object_list, self.obj_param.enable_tracking, self.obj_param.body_format)
-    #         # print(len(self.bodies.object_list))
-    #         # print(image_left_ocv.shape)
-    #     else:
-    #         image_left_ocv=None
-    #     return image_left_ocv
-    
-    # def record_start(self):
-
-    #     if not self.isRecording:
-    #         err = self.zed.enable_recording(self.recordingParameters)
-    #         print(err)
-    #         if err == sl.ERROR_CODE.SUCCESS:
-    #             print("ZED is recording")
-    #             self.isRecording=True
-    #         else:
-    #             print("ZED is not recording")
-    #             self.isRecording=False
-    
-    # def record_end(self):
-    #     if self.isRecording:
-    #         self.zed.disable_recording()
-    #         print("ZED is not recording")
-    #         self.isRecording=False
-            
             
     def live(self,live_queue,svo_file):
         
@@ -142,6 +104,7 @@ class ZED_body:
         live_image = sl.Mat()
         bodies = sl.Objects()
 
+        self.recordingParameters.video_filename = os.path.join(self.output_path,svo_file)
 
         print("ZED live...")
         status = zed_live.open(self.init_params_live)
@@ -159,7 +122,25 @@ class ZED_body:
         print(zed_error)
 
         i_frame=0    
+        is_Recording=False
         while self.liveOn.is_set():
+            if self.liveRec.is_set():
+                if not is_Recording:
+                    err = zed_live.enable_recording(self.recordingParameters)
+                    print(err)
+                    print(f"[INFO] Recording to: {self.recordingParameters.video_filename}")
+                    if err == sl.ERROR_CODE.SUCCESS:
+                        print("ZED is recording")
+                    else:
+                        print("ZED is not recording")    
+                    is_Recording=True
+                    i_frame=0
+            else:
+                if is_Recording:
+                    zed_live.disable_recording()
+                    print("ZED is not recording")
+                    is_Recording=False
+                    i_frame=0
             if zed_live.grab() == sl.ERROR_CODE.SUCCESS:
                 zed_live.retrieve_image(live_image,  sl.VIEW.LEFT, sl.MEM.CPU, self.display_resolution)
                 zed_live.retrieve_objects(bodies, self.obj_runtime_param)
@@ -168,7 +149,8 @@ class ZED_body:
                 #     print("{} {}".format(obj.id, obj.position))
                 image_left_live_ocv = live_image.get_data()
                 cv_viewer.render_2D(image_left_live_ocv,self.image_scale,bodies.object_list, self.obj_param.enable_tracking, self.obj_param.body_format)
-                i_frame+=1
+                if is_Recording:
+                    i_frame+=1
                 cur_frame={'image_left_live_ocv':image_left_live_ocv.copy(),
                            'bodypoints':bodies.object_list,
                            'position':i_frame}
@@ -190,7 +172,9 @@ class ZED_body:
             
         
         
-    def playback(self,svo_file,playback_queue):
+    def playback(self,playback_queue,svo_file):
+        
+        self.playbackOn_right.set()
         
         zed_playback = sl.Camera()
         svo_image = sl.Mat()
@@ -206,8 +190,7 @@ class ZED_body:
             print("ZED playback is not connected")
         else:
             print("ZED playback is connected")
-        exit_app=False
-        while not exit_app:
+        while self.playbackOn_right.is_set():
             
             status=zed_playback.grab()
             if status == sl.ERROR_CODE.SUCCESS:
@@ -218,14 +201,14 @@ class ZED_body:
                 svo_position = zed_playback.get_svo_position();
                 print(svo_position)
             elif status == sl.ERROR_CODE.END_OF_SVOFILE_REACHED:
-                print("SVO end has been reached. Looping back to first frame")
+                print("SVO end has been reached.")#" Looping back to first frame")
                 #zed_playback.set_svo_position(0)
-                exit_app=True
+                self.playbackOn_right.clear()
             else:
                 print("SVO reading error")
-                exit_app=True
+                self.playbackOn_right.clear()
                 
-            cur_frame={'image_left_live_ocv':image_left_recorded_ocv.copy(),'position':svo_position}
+            cur_frame={'image_left_playback_ocv':image_left_recorded_ocv.copy(),'position':svo_position}
             # check if the queue has space
             if not playback_queue.full():
             	# add an item to the queue
