@@ -38,6 +38,7 @@ class ZED_body:
         self.liveRec=threading.Event()
         
         self.playbackOn_right=threading.Event()
+        self.playbackStart=threading.Event()
         
         self.output_path=r"../store"
         # self.isRecording=False
@@ -192,29 +193,31 @@ class ZED_body:
             print("ZED playback is connected")
         while self.playbackOn_right.is_set():
             
-            status=zed_playback.grab()
-            if status == sl.ERROR_CODE.SUCCESS:
-                # Read side by side frames stored in the SVO
-                zed_playback.retrieve_image(svo_image,  sl.VIEW.LEFT, sl.MEM.CPU, self.display_resolution)
-                # Get frame count
-                image_left_recorded_ocv = svo_image.get_data()
-                svo_position = zed_playback.get_svo_position();
-                print(svo_position)
-            elif status == sl.ERROR_CODE.END_OF_SVOFILE_REACHED:
-                print("SVO end has been reached.")#" Looping back to first frame")
-                #zed_playback.set_svo_position(0)
-                self.playbackOn_right.clear()
-            else:
-                print("SVO reading error")
-                self.playbackOn_right.clear()
-                
-            cur_frame={'image_left_playback_ocv':image_left_recorded_ocv.copy(),'position':svo_position}
-            # check if the queue has space
-            if not playback_queue.full():
-            	# add an item to the queue
-            	playback_queue.put_nowait(cur_frame)
-            else:
-                print('live queue full')
+            if self.playbackStart.is_set():
+            
+                status=zed_playback.grab()
+                if status == sl.ERROR_CODE.SUCCESS:
+                    # Read side by side frames stored in the SVO
+                    zed_playback.retrieve_image(svo_image,  sl.VIEW.LEFT, sl.MEM.CPU, self.display_resolution)
+                    # Get frame count
+                    image_left_recorded_ocv = svo_image.get_data()
+                    svo_position = zed_playback.get_svo_position();
+                    print(svo_position)
+                elif status == sl.ERROR_CODE.END_OF_SVOFILE_REACHED:
+                    print("SVO end has been reached.")#" Looping back to first frame")
+                    #zed_playback.set_svo_position(0)
+                    self.playbackOn_right.clear()
+                else:
+                    print("SVO reading error")
+                    self.playbackOn_right.clear()
+                    
+                cur_frame={'image_left_playback_ocv':image_left_recorded_ocv.copy(),'position':svo_position}
+                # check if the queue has space
+                if not playback_queue.full():
+                	# add an item to the queue
+                	playback_queue.put_nowait(cur_frame)
+                else:
+                    print('live queue full')
         
         svo_image.free(sl.MEM.CPU)
         zed_playback.close()

@@ -30,6 +30,8 @@ class ZED_video_player:
         # self.rt_frame_counter=0
         # self.rt_time_counter=0
         self.t_rec_start=None
+        self.t_playback_right_start=None
+        self.is_playback_right=False
         # self.frame_counter=0
 
 
@@ -85,8 +87,11 @@ class ZED_video_player:
         self.btn_record = tk.Button(self.root, text="Record", bg='gray', command=self.OnRecord)
         self.btn_record.grid(row=3, column=2)
         
-        self.rt_timer = tk.Label(self.root, height = 2, width = 30)
-        self.rt_timer.grid(row=3, column=1)
+        self.left_timer = tk.Label(self.root, height = 2, width = 30)
+        self.left_timer.grid(row=3, column=1)
+        
+        self.right_timer = tk.Label(self.root, height = 2, width = 30)
+        self.right_timer.grid(row=3, column=3)
         
         self.rt_save_instruction=tk.Label(self.root,text="SVO FILE NAME:",height = 1,width = 20,font=font.Font(family = "Open look cursor", size = 10))
         self.rt_save_instruction.grid(row=4, column=1)
@@ -94,14 +99,13 @@ class ZED_video_player:
         self.rt_save_file=tk.Text(self.root,height = 1,width = 30,font=font.Font(family = "Open look cursor", size = 10))
         self.rt_save_file.grid(row=4,column=2)
         
-        self.btn_starstop = tk.Button(self.root, text="Start", command=self.OnStartStop)
-        self.btn_starstop.grid(row=3, column=3, rowspan=6)
+        self.btn_starstop_left = tk.Button(self.root, text="START", command=self.OnStartStopLEFT)
+        self.btn_starstop_left.grid(row=3, column=4)
         
-        self.rec_timer = tk.Label(self.root, height = 2, width = 30)
-        self.rec_timer.grid(row=3, column=4)
         
         self.file_list_box=tk.Listbox(self.root,width=100,font=font.Font(family = "Open look cursor", size = 8))
         self.file_list_box.grid(row=4,column=3,columnspan=2)
+        self.file_list_box.bind("<<ListboxSelect>>", self.OnFileSelect)
         self.RefreshFileList()
 
    
@@ -126,7 +130,7 @@ class ZED_video_player:
                         frame_counter_live=live_frame['position']
                         if self.t_rec_start is not None:
                             delta=datetime.datetime.now()-self.t_rec_start
-                            self.rt_timer.config(text=f"{str(frame_counter_live)} : {str(delta.total_seconds())}")
+                            self.left_timer.config(text=f"{str(frame_counter_live)} : {str(delta.total_seconds())}")
                         current_image=live_frame['image_left_live_ocv']
                         current_image=cv2.cvtColor(current_image, cv2.COLOR_BGR2RGB)
         
@@ -139,10 +143,10 @@ class ZED_video_player:
                     while not self.right_queue.empty():
                         playback_frame=self.right_queue.get()
                     if playback_frame is not None:
-                        # frame_counter_playback=playback_frame['position']
-                        # if self.t_rec_start is not None:
-                        #     delta=datetime.datetime.now()-self.t_rec_start
-                        #     self.rt_timer.config(text=f"{str(frame_counter_live)} : {str(delta.total_seconds())}")
+                        frame_counter_playback=playback_frame['position']
+                        if self.t_playback_right_start is not None:
+                            delta=datetime.datetime.now()-self.t_playback_right_start
+                            self.right_timer.config(text=f"{str(frame_counter_playback)} : {str(delta.total_seconds())}")
                         current_image=playback_frame['image_left_playback_ocv']
                         current_image=cv2.cvtColor(current_image, cv2.COLOR_BGR2RGB)
         
@@ -150,6 +154,7 @@ class ZED_video_player:
                         self.left_panel.imgtk = imgtk  # anchor imgtk so it does not be deleted by garbage-collector  
                         self.left_panel.config(image=imgtk)  # show the image
                         self.root.update()
+                #self.RefreshFileList()
 
         except RuntimeError:
             print("[INFO] caught a RuntimeError")
@@ -157,7 +162,7 @@ class ZED_video_player:
     def OnPlaybackRight(self):
         print('left')
         if self.zb.playbackOn_right.is_set():
-            self.zb.paybackOn_right.clear()
+            self.zb.playbackOn_right.clear()
             self.right_queue=None
             self.btn_playback_right.config(bg='gray')
         else:
@@ -169,31 +174,12 @@ class ZED_video_player:
                 self.right_queue = queue.Queue()
                 thread = threading.Thread(target=self.zb.playback, args=((self.right_queue,file_name)))
                 thread.start()     
-                self.btn_playback_right.config(bg='red')
+                #self.btn_playback_right.config(bg='red')
             else:
                 print("[INFO] file name is not set")
         
     def OnPlaybackLeft(self):
         print('right')
-        
-
-
-    def OnRecord(self):
-        
-        if self.zb.liveOn.is_set():
-            if self.zb.liveRec.is_set():
-                # STOP RECORDING
-                self.zb.liveRec.clear()
-                self.t_rec_start=None
-                self.btn_record.config(bg='green')
-            else:
-                # START RECORDING
-                self.zb.liveRec.set()
-                self.t_rec_start=datetime.datetime.now()
-                self.btn_record.config(bg='red')
-        else:
-            self.btn_record.config(bg='gray')    
-            
         
     def OnLive(self):
         if self.zb.liveOn.is_set():
@@ -213,28 +199,46 @@ class ZED_video_player:
                 self.btn_live.config(bg='red',text="STOP LIVE")
             else:
                 print("[INFO] file name is not set")
-            
+    
+    def OnRecord(self):
         
-    def OnStartStop(self):
-        # grab the current timestamp and use it to construct the
-        # output path
-        # ts = datetime.datetime.now()
-        selected_file_index = self.file_list_box.curselection()[0]
-        print(self.file_list_box.get(selected_file_index))
-        # self.zb.playback(os.path.join(self.output_dir,self.file_list_box.get(selected_file_index)))
-        # filename = "{}.jpg".format(ts.strftime("%Y-%m-%d_%H-%M-%S"))
-        # filepath = os.path.sep.join((self.outputPath, filename))
-        # # save the file
-        # self.wci.saveStereoImage(filepath,self.isDetectionOn)
-        # #self.wci.saveImage(filepath)
-        # print("[INFO] saved {}".format(ts))
+        if self.zb.liveOn.is_set():
+            if self.zb.liveRec.is_set():
+                # STOP RECORDING
+                self.zb.liveRec.clear()
+                self.t_rec_start=None
+                self.btn_record.config(bg='green')
+            else:
+                # START RECORDING
+                self.zb.liveRec.set()
+                self.t_rec_start=datetime.datetime.now()
+                self.btn_record.config(bg='red')
+        else:
+            self.btn_record.config(bg='gray')                
+        
+    def OnStartStopLEFT(self):
+        if self.zb.playbackOn_right.is_set():
+            if not self.zb.playbackStart.is_set():
+                # start video
+                self.zb.playbackStart.set()
+                self.t_playback_right_start=datetime.datetime.now()
+                self.btn_starstop_left.config(bg='red',text="STOP")
+            else:
+                self.zb.playbackStart.clear()
+                self.t_playback_right_start=None
+                self.btn_starstop_left.config(bg='green',text="START")
+        
         
     def RefreshFileList(self):
         myList = os.listdir(r'../store')
-        print(myList)
+        # print(myList)
         self.file_list_box.delete(0, tk.END)
         for file in myList:
             self.file_list_box.insert(tk.END, file)
+            
+    def OnFileSelect(self,event):
+        self.btn_playback_right.config(bg='green')
+        
         
     def onAppClose(self):
         # set the stop event, cleanup the camera, and allow the rest of
