@@ -42,4 +42,16 @@ thread_2.start()
 #     camera_info = zed.get_camera_information()
 # return camera_info
 # zed.close()
+
+import pyzed.sl as sl
+
+svo_file=r'../store/a1_2023_06_21_10_52_36.svo'
+init_params_playback = sl.InitParameters()
+init_params_playback.set_from_svo_file(svo_file)
+init_params_playback.camera_fps=15
+init_params_playback.save('a')
+
+input_t = sl.InputType()
+input_t.set_from_svo_file(svo_file)
+init_params_playback.input = input_t
  

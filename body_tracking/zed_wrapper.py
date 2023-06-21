@@ -49,6 +49,7 @@ class ZED_body:
         self.init_params_live.coordinate_units = sl.UNIT.METER          # Set coordinate units
         #init_params_live.depth_mode = sl.DEPTH_MODE.ULTRA
         self.init_params_live.coordinate_system = sl.COORDINATE_SYSTEM.RIGHT_HANDED_Y_UP
+        self.init_params_live.camera_fps=15
              
         
         self.camera_info=self.check_zed(self.init_params_live)
@@ -113,6 +114,7 @@ class ZED_body:
             print("ZED live is not connected")
         else:
             print("ZED live is connected")
+        self.init_params_live.save('c')
  
         # Enable Object Detection and Positional Tracking module
         
@@ -142,6 +144,7 @@ class ZED_body:
                     print("ZED is not recording")
                     is_Recording=False
                     i_frame=0
+            print(f"fps: {zed_live.get_current_fps()}")
             if zed_live.grab() == sl.ERROR_CODE.SUCCESS:
                 zed_live.retrieve_image(live_image,  sl.VIEW.LEFT, sl.MEM.CPU, self.display_resolution)
                 zed_live.retrieve_objects(bodies, self.obj_runtime_param)
@@ -180,21 +183,28 @@ class ZED_body:
         zed_playback = sl.Camera()
         svo_image = sl.Mat()
 
-        
-        self.init_params_playback = sl.InitParameters()
-        self.init_params_playback.set_from_svo_file(svo_file)
-        
+        is_firstFRAME=True
+        init_params_playback = sl.InitParameters()
+        init_params_playback.set_from_svo_file(svo_file)
+        init_params_playback.camera_resolution = sl.RESOLUTION.HD1080  # Use HD1080 video mode
+        init_params_playback.coordinate_units = sl.UNIT.METER          # Set coordinate units
+        #init_params_live.depth_mode = sl.DEPTH_MODE.ULTRA
+        init_params_playback.coordinate_system = sl.COORDINATE_SYSTEM.RIGHT_HANDED_Y_UP
+        init_params_playback.camera_fps=15
+        init_params_playback.save('a')
+
         print(f'ZED playback: {svo_file}')
         
-        status = zed_playback.open(self.init_params_playback)
+        status = zed_playback.open(init_params_playback)
         if status != sl.ERROR_CODE.SUCCESS:
             print("ZED playback is not connected")
         else:
             print("ZED playback is connected")
         while self.playbackOn_right.is_set():
             
-            if self.playbackStart.is_set():
+            if self.playbackStart.is_set() or is_firstFRAME:
             
+                print(f"fps: {zed_playback.get_current_fps()}")
                 status=zed_playback.grab()
                 if status == sl.ERROR_CODE.SUCCESS:
                     # Read side by side frames stored in the SVO
@@ -218,6 +228,10 @@ class ZED_body:
                 	playback_queue.put_nowait(cur_frame)
                 else:
                     print('live queue full')
+            if is_firstFRAME:
+                zed_playback.set_svo_position(0)
+                is_firstFRAME=False
+                
         
         svo_image.free(sl.MEM.CPU)
         zed_playback.close()

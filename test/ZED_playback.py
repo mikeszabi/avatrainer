@@ -19,8 +19,12 @@ input_path = r'../store/test.svo' #sys.argv[0]
 init_1 = sl.InitParameters()
 init_1.set_from_svo_file(r'../store/test.svo')
 
+svo_file=r'../store/a1_2023_06_21_10_52_36.svo'
+
+
 init_2 = sl.InitParameters()
-init_2.set_from_svo_file(r'../store/kukac_2023_06_18_22_46_10.svo')
+init_2.set_from_svo_file(svo_file)
+init_2.camera_fps=15
 
 
 def zed_playback_loop(init):
@@ -34,14 +38,15 @@ def zed_playback_loop(init):
     svo_image = sl.Mat()
     while not exit_app:
       if zed1.grab() == sl.ERROR_CODE.SUCCESS:
-        # Read side by side frames stored in the SVO
-        zed1.retrieve_image(svo_image, sl.VIEW.SIDE_BY_SIDE)
-        # Get frame count
-        svo_position = zed1.get_svo_position();
+          print(f"fps: {zed1.get_current_fps()}")
+          # Read side by side frames stored in the SVO
+          zed1.retrieve_image(svo_image, sl.VIEW.SIDE_BY_SIDE)
+          # Get frame count
+          svo_position = zed1.get_svo_position();
       elif zed1.grab() == sl.ERROR_CODE.END_OF_SVOFILE_REACHED:
-        print("SVO end has been reached. Looping back to first frame")
-        zed1.set_svo_position(0)
-        exit_app=True
+          print("SVO end has been reached. Looping back to first frame")
+          zed1.set_svo_position(0)
+          exit_app=True
 
 
 stopEvent = threading.Event()
