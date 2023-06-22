@@ -27,7 +27,16 @@ init_2.set_from_svo_file(svo_file)
 init_2.camera_fps=15
 
 
+def print_camera_information(cam):
+    print("Resolution: {0}, {1}.".format(round(cam.get_camera_information().camera_resolution.width, 2), cam.get_camera_information().camera_resolution.height))
+    print("Camera FPS: {0}.".format(cam.get_camera_information().camera_fps))
+    print("Firmware: {0}.".format(cam.get_camera_information().camera_configuration.firmware_version))
+    print("Serial number: {0}.\n".format(cam.get_camera_information().serial_number))
+
+
 def zed_playback_loop(init):
+    runtime = sl.RuntimeParameters()
+
     zed1 = sl.Camera()
     status = zed1.open(init)
     if status != sl.ERROR_CODE.SUCCESS:
@@ -37,16 +46,19 @@ def zed_playback_loop(init):
     exit_app=False
     svo_image = sl.Mat()
     while not exit_app:
-      if zed1.grab() == sl.ERROR_CODE.SUCCESS:
-          print(f"fps: {zed1.get_current_fps()}")
-          # Read side by side frames stored in the SVO
-          zed1.retrieve_image(svo_image, sl.VIEW.SIDE_BY_SIDE)
-          # Get frame count
-          svo_position = zed1.get_svo_position();
-      elif zed1.grab() == sl.ERROR_CODE.END_OF_SVOFILE_REACHED:
-          print("SVO end has been reached. Looping back to first frame")
-          zed1.set_svo_position(0)
-          exit_app=True
+        err = zed1.grab(runtime)
+        if err == sl.ERROR_CODE.SUCCESS:
+            print(f"fps: {zed1.get_current_fps()}")
+            # Read side by side frames stored in the SVO
+            zed1.retrieve_image(svo_image, sl.VIEW.SIDE_BY_SIDE)
+            # Get frame count
+            svo_position = zed1.get_svo_position();
+        elif err == sl.ERROR_CODE.END_OF_SVOFILE_REACHED:
+            print("SVO end has been reached. Looping back to first frame")
+            zed1.set_svo_position(0)
+            exit_app=True
+        else:
+            print('no frame')
 
 
 stopEvent = threading.Event()

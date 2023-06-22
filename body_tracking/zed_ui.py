@@ -122,7 +122,7 @@ class ZED_video_player:
             while not self.stopEvent.is_set():
                 #if left_live:
                 if self.left_queue is not None:
-                    #print(f'live images in queue:{self.left_queue.qsize()}')
+                    # print(f'live images in queue:{self.left_queue.qsize()}')
                     live_frame=None
                     while not self.left_queue.empty():
                         live_frame=self.left_queue.get()
@@ -139,6 +139,8 @@ class ZED_video_player:
                         self.right_panel.config(image=imgtk)  # show the image
                         self.root.update()
                 if self.right_queue is not None:
+                    # print(f'images in queue:{self.right_queue.qsize()}')
+
                     playback_frame=None
                     while not self.right_queue.empty():
                         playback_frame=self.right_queue.get()

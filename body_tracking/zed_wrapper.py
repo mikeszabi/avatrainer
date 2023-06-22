@@ -80,6 +80,11 @@ class ZED_body:
                      , self.display_resolution.height / self.camera_info.camera_resolution.height]
 
 
+    def print_camera_information(self,camera_info):
+        print("Resolution: {0}, {1}.".format(round(camera_info.camera_resolution.width, 2), camera_info.camera_resolution.height))
+        print("Camera FPS: {0}.".format(camera_info.camera_fps))
+        print("Firmware: {0}.".format(camera_info.camera_configuration.firmware_version))
+        print("Serial number: {0}.\n".format(camera_info.serial_number))
         
     def check_zed(self,init_params):
         zed = sl.Camera()
@@ -92,6 +97,8 @@ class ZED_body:
         else:
             print("ZED is connected")
             camera_info = zed.get_camera_information()
+            self.print_camera_information(camera_info)
+
 
         zed.close()
 
@@ -114,6 +121,7 @@ class ZED_body:
             print("ZED live is not connected")
         else:
             print("ZED live is connected")
+            self.print_camera_information(zed_live.get_camera_information())
         self.init_params_live.save('c')
  
         # Enable Object Detection and Positional Tracking module
@@ -184,14 +192,17 @@ class ZED_body:
         svo_image = sl.Mat()
 
         is_firstFRAME=True
-        init_params_playback = sl.InitParameters()
-        init_params_playback.set_from_svo_file(svo_file)
+        input_type = sl.InputType()
+        input_type.set_from_svo_file(svo_file)
+        init_params_playback = sl.InitParameters(input_t=input_type, svo_real_time_mode=True)
+        # init_params_playback = sl.InitParameters()
+        # init_params_playback.set_from_svo_file(svo_file)
         init_params_playback.camera_resolution = sl.RESOLUTION.HD1080  # Use HD1080 video mode
         init_params_playback.coordinate_units = sl.UNIT.METER          # Set coordinate units
         #init_params_live.depth_mode = sl.DEPTH_MODE.ULTRA
         init_params_playback.coordinate_system = sl.COORDINATE_SYSTEM.RIGHT_HANDED_Y_UP
         init_params_playback.camera_fps=15
-        init_params_playback.save('a')
+        # init_params_playback.save('a')
 
         print(f'ZED playback: {svo_file}')
         
@@ -200,6 +211,8 @@ class ZED_body:
             print("ZED playback is not connected")
         else:
             print("ZED playback is connected")
+            self.print_camera_information(zed_playback.get_camera_information())
+
         while self.playbackOn_right.is_set():
             
             if self.playbackStart.is_set() or is_firstFRAME:
