@@ -131,13 +131,14 @@ class ZED_video_player:
                         if self.t_rec_start is not None:
                             delta=datetime.datetime.now()-self.t_rec_start
                             self.left_timer.config(text=f"{str(frame_counter_live)} : {str(delta.total_seconds())}")
-                        current_image=live_frame['image_left_live_ocv']
+                        current_image=live_frame['image_ocv']
                         current_image=cv2.cvtColor(current_image, cv2.COLOR_BGR2RGB)
         
                         imgtk=ImageTk.PhotoImage(image=Image.fromarray(current_image).resize((self.disp_width,self.disp_height)))
                         self.right_panel.imgtk = imgtk  # anchor imgtk so it does not be deleted by garbage-collector  
                         self.right_panel.config(image=imgtk)  # show the image
                         self.root.update()
+                        
                 if self.right_queue is not None:
                     # print(f'images in queue:{self.right_queue.qsize()}')
 
@@ -149,7 +150,7 @@ class ZED_video_player:
                         if self.t_playback_right_start is not None:
                             delta=datetime.datetime.now()-self.t_playback_right_start
                             self.right_timer.config(text=f"{str(frame_counter_playback)} : {str(delta.total_seconds())}")
-                        current_image=playback_frame['image_left_playback_ocv']
+                        current_image=playback_frame['image_ocv']
                         current_image=cv2.cvtColor(current_image, cv2.COLOR_BGR2RGB)
         
                         imgtk=ImageTk.PhotoImage(image=Image.fromarray(current_image).resize((self.disp_width,self.disp_height)))

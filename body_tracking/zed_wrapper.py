@@ -15,6 +15,7 @@ Created on Thu Jun 15 22:16:27 2023
    # https://www.pythontutorial.net/python-concurrency/python-threading/
 
 """
+import sys
 import os
 import threading
 import cv2
@@ -53,6 +54,10 @@ class ZED_body:
              
         
         self.camera_info=self.check_zed(self.init_params_live)
+        
+        if self.camera_info is None:
+            print('exiting')
+            sys.exit()
 
 
         # Enable Positional tracking (mandatory for object detection)
@@ -135,6 +140,8 @@ class ZED_body:
         i_frame=0    
         is_Recording=False
         while self.liveOn.is_set():
+            
+            # recording only in live mode
             if self.liveRec.is_set():
                 if not is_Recording:
                     err = zed_live.enable_recording(self.recordingParameters)
@@ -153,6 +160,7 @@ class ZED_body:
                     is_Recording=False
                     i_frame=0
             print(f"fps: {zed_live.get_current_fps()}")
+            
             if zed_live.grab() == sl.ERROR_CODE.SUCCESS:
                 zed_live.retrieve_image(live_image,  sl.VIEW.LEFT, sl.MEM.CPU, self.display_resolution)
                 zed_live.retrieve_objects(bodies, self.obj_runtime_param)
@@ -163,7 +171,7 @@ class ZED_body:
                 cv_viewer.render_2D(image_left_live_ocv,self.image_scale,bodies.object_list, self.obj_param.enable_tracking, self.obj_param.body_format)
                 if is_Recording:
                     i_frame+=1
-                cur_frame={'image_left_live_ocv':image_left_live_ocv.copy(),
+                cur_frame={'image_ocv':image_left_live_ocv.copy(),
                            'bodypoints':bodies.object_list,
                            'position':i_frame}
                 # check if the queue has space
@@ -190,8 +198,11 @@ class ZED_body:
         
         zed_playback = sl.Camera()
         svo_image = sl.Mat()
+        bodies = sl.Objects()
+
 
         is_firstFRAME=True
+        
         input_type = sl.InputType()
         input_type.set_from_svo_file(svo_file)
         init_params_playback = sl.InitParameters(input_t=input_type, svo_real_time_mode=True)
@@ -205,6 +216,14 @@ class ZED_body:
         # init_params_playback.save('a')
 
         print(f'ZED playback: {svo_file}')
+        
+        # Enable Object Detection and Positional Tracking module
+        
+        zed_error = zed_playback.enable_positional_tracking(self.positional_tracking_parameters)
+        print(self.obj_param)
+
+        zed_error = zed_playback.enable_object_detection(self.obj_param)
+        print(zed_error)
         
         status = zed_playback.open(init_params_playback)
         if status != sl.ERROR_CODE.SUCCESS:
@@ -222,10 +241,26 @@ class ZED_body:
                 if status == sl.ERROR_CODE.SUCCESS:
                     # Read side by side frames stored in the SVO
                     zed_playback.retrieve_image(svo_image,  sl.VIEW.LEFT, sl.MEM.CPU, self.display_resolution)
-                    # Get frame count
-                    image_left_recorded_ocv = svo_image.get_data()
+                    zed_playback.retrieve_objects(bodies, self.obj_runtime_param)
+                    #https://www.stereolabs.com/docs/object-detection/using-object-detection/
+                    # for obj in bodies.object_list:
+                    #     print("{} {}".format(obj.id, obj.position))
+                    image_left_playback_ocv = svo_image.get_data()
+                    cv_viewer.render_2D(image_left_playback_ocv,self.image_scale,bodies.object_list, self.obj_param.enable_tracking, self.obj_param.body_format)
+                    
                     svo_position = zed_playback.get_svo_position();
-                    print(svo_position)
+                    cur_frame={'image_ocv':image_left_playback_ocv.copy(),
+                               'bodypoints':bodies.object_list,
+                               'position':svo_position}
+                    # check if the queue has space
+                    if not playback_queue.full():
+                    	# add an item to the queue
+                    	playback_queue.put_nowait(cur_frame)
+                    else:
+                        print('live queue full')
+                   
+                   
+                    # print(svo_position)
                 elif status == sl.ERROR_CODE.END_OF_SVOFILE_REACHED:
                     print("SVO end has been reached.")#" Looping back to first frame")
                     #zed_playback.set_svo_position(0)
@@ -234,13 +269,7 @@ class ZED_body:
                     print("SVO reading error")
                     self.playbackOn_right.clear()
                     
-                cur_frame={'image_left_playback_ocv':image_left_recorded_ocv.copy(),'position':svo_position}
-                # check if the queue has space
-                if not playback_queue.full():
-                	# add an item to the queue
-                	playback_queue.put_nowait(cur_frame)
-                else:
-                    print('live queue full')
+                
             if is_firstFRAME:
                 zed_playback.set_svo_position(0)
                 is_firstFRAME=False
