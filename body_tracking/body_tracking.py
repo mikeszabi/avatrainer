@@ -31,6 +31,8 @@ import ogl_viewer.viewer as gl
 import cv_viewer.tracking_viewer as cv_viewer
 import numpy as np
 
+filepath=r''
+
 if __name__ == "__main__":
     print("Running Body Tracking sample ... Press 'q' to quit")
 
@@ -60,12 +62,12 @@ if __name__ == "__main__":
     # Enable Positional tracking (mandatory for object detection)
     positional_tracking_parameters = sl.PositionalTrackingParameters()
     # If the camera is static, uncomment the following line to have better performances and boxes sticked to the ground.
-    # positional_tracking_parameters.set_as_static = True
+    positional_tracking_parameters.set_as_static = True
     zed.enable_positional_tracking(positional_tracking_parameters)
     
     obj_param = sl.ObjectDetectionParameters()
     obj_param.enable_body_fitting = True            # Smooth skeleton move
-    obj_param.enable_tracking = True                # Track people across images flow
+    obj_param.enable_tracking = False                # Track people across images flow
     obj_param.detection_model = sl.DETECTION_MODEL.HUMAN_BODY_FAST 
     obj_param.body_format = sl.BODY_FORMAT.POSE_18  # Choose the BODY_FORMAT you wish to use
 
@@ -84,14 +86,14 @@ if __name__ == "__main__":
                  , display_resolution.height / camera_info.camera_resolution.height]
 
     # Create OpenGL viewer
-    # viewer = gl.GLViewer()
-    # viewer.init(camera_info.calibration_parameters.left_cam, obj_param.enable_tracking,obj_param.body_format)
+    viewer = gl.GLViewer()
+    viewer.init(camera_info.calibration_parameters.left_cam, obj_param.enable_tracking,obj_param.body_format)
 
     # Create ZED objects filled in the main loop
     bodies = sl.Objects()
     image = sl.Mat()
     c=-1
-    while not (c==27): #viewer.is_available():
+    while viewer.is_available(): #not (c==27): #viewer.is_available():
         # Grab an image
         if zed.grab() == sl.ERROR_CODE.SUCCESS:
             # Retrieve left image
@@ -100,14 +102,14 @@ if __name__ == "__main__":
             zed.retrieve_objects(bodies, obj_runtime_param)
 
             # Update GL view
-            #viewer.update_view(image, bodies) 
+            viewer.update_view(image, bodies) 
             # Update OCV view
             image_left_ocv = image.get_data()
             cv_viewer.render_2D(image_left_ocv,image_scale,bodies.object_list, obj_param.enable_tracking, obj_param.body_format)
             cv2.imshow("ZED | 2D View", image_left_ocv)
             cv2.waitKey(10)
 
-    #viewer.exit()
+    viewer.exit()
 
     image.free(sl.MEM.CPU)
     # Disable modules and close camera

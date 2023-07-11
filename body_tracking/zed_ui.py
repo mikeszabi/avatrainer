@@ -54,14 +54,15 @@ class ZED_video_player:
 
         self.root.config(cursor="arrow",bg='lightgray')
         
-        self.zb=zed_wrapper.ZED_body()
+        self.zb_left=zed_wrapper.ZED_body()
+        self.zb_right=zed_wrapper.ZED_body()
         # self.zed_connect()
         
         
         # if self.zb is None:
         #     self.onAppClose()
-        self.disp_width=self.zb.display_resolution.width
-        self.disp_height=self.zb.display_resolution.height
+        self.disp_width=self.zb_left.display_resolution.width
+        self.disp_height=self.zb_left.display_resolution.height
                
         self.gui_layout()
         self.root.wm_protocol("WM_DELETE_WINDOW", self.onAppClose)
@@ -133,11 +134,7 @@ class ZED_video_player:
     def main_loop(self,mainstopEvent):
         """ Get frame from the video stream and show it in Tkinter """
 
-        # queue_left = queue.Queue()
-        # thread_1 = threading.Thread(target=self.zb.live, args=((queue_left,)))
-        # thread_1.start()     
-        
-
+  
         try:
             while not mainstopEvent.is_set():
                 #if left_live:
@@ -204,10 +201,10 @@ class ZED_video_player:
                     # PLAYBACK THREAD STARTS
                     self.playbackEvent_right.set()
                     self.playbackStartEvent_right.clear()
-                    self.thread_right = threading.Thread(target=self.zb.playback, args=((self.queue_right,
+                    self.thread_right = threading.Thread(target=self.zb_right.playback, args=((self.queue_right,
                                                                                          self.playbackEvent_right,
                                                                                          self.playbackStartEvent_right,
-                                                                                         file_name)))
+                                                                                         file_name,None,True)))
                     self.thread_right.start()     
                     self.btn_playback_right.config(bg='red')
                 else:
@@ -237,10 +234,10 @@ class ZED_video_player:
                     # PLAYBACK THREAD STARTS
                     self.playbackEvent_left.set()
                     self.playbackStartEvent_left.clear()
-                    self.thread_left = threading.Thread(target=self.zb.playback, args=((self.queue_left,
+                    self.thread_left = threading.Thread(target=self.zb_left.playback, args=((self.queue_left,
                                                                                          self.playbackEvent_left,
                                                                                          self.playbackStartEvent_left,
-                                                                                         file_name)))
+                                                                                         file_name,None,True)))
                     self.thread_left.start()   
                     self.btn_playback_left.config(bg='gray')
                 else:
@@ -270,7 +267,7 @@ class ZED_video_player:
                     self.recordEvent_left.clear()
                     file_name+='_'+datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")+'.svo'
                     print("[INFO] saved {}".format(file_name))
-                    self.thread_left = threading.Thread(target=self.zb.live, args=((self.queue_left,
+                    self.thread_left = threading.Thread(target=self.zb_left.live, args=((self.queue_left,
                                                                                     self.liveEvent_left,
                                                                                     self.recordEvent_left,
                                                                                     file_name)))

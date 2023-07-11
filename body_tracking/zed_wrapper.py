@@ -28,19 +28,7 @@ import numpy as np
 class ZED_body:
     def __init__(self):
 
-        # Create a Camera object
-        # self.zed = sl.Camera()
-        # self.zed_playback = sl.Camera()
-        
-        #self.image_left_recorded_ocv=None
-        # self.svo_position=0
-        
-        # self.liveOn=threading.Event()
-        # self.liveRec=threading.Event()
-        
-        # self.playbackOn=threading.Event()
-        # self.playbackRun=threading.Event()
-        
+    
         self.output_path=r"../store"
         # self.isRecording=False
     
@@ -67,7 +55,7 @@ class ZED_body:
         
         self.obj_param = sl.ObjectDetectionParameters()
         self.obj_param.enable_body_fitting = True            # Smooth skeleton move
-        self.obj_param.enable_tracking = True                # Track people across images flow
+        self.obj_param.enable_tracking = False                # Track people across images flow
         self.obj_param.detection_model = sl.DETECTION_MODEL.HUMAN_BODY_FAST 
         self.obj_param.body_format = sl.BODY_FORMAT.POSE_18  # Choose the BODY_FORMAT you wish to use
         
@@ -174,7 +162,7 @@ class ZED_body:
                     svo_position+=1
                     
                 cur_frame={'image_ocv':image_left_live_ocv.copy(),
-                           'bodypoints':bodies.object_list,
+                           'bodypoints':bodies.object_list.copy(),
                            'position':svo_position}
                 # check if the queue has space
                 if not live_queue.full():
@@ -189,11 +177,11 @@ class ZED_body:
 
                 
         live_image.free(sl.MEM.CPU)    
-        zed_live.close()   
+        # zed_live.close()   
             
         
         
-    def playback(self,playback_queue,loopEvent,playbackStartEvent,svo_file):
+    def playback(self,playback_queue,loopEvent,playbackStartEvent,svo_file,step_by_step,real_time_mode):
         
         zed_playback = sl.Camera()
         svo_image = sl.Mat()
@@ -202,17 +190,28 @@ class ZED_body:
 
         is_firstFRAME=True
         
-        input_type = sl.InputType()
-        input_type.set_from_svo_file(svo_file)
-        init_params_playback = sl.InitParameters(input_t=input_type, svo_real_time_mode=True)
-        # init_params_playback = sl.InitParameters()
-        # init_params_playback.set_from_svo_file(svo_file)
-        init_params_playback.camera_resolution = sl.RESOLUTION.HD1080  # Use HD1080 video mode
-        init_params_playback.coordinate_units = sl.UNIT.METER          # Set coordinate units
-        #init_params_live.depth_mode = sl.DEPTH_MODE.ULTRA
-        init_params_playback.coordinate_system = sl.COORDINATE_SYSTEM.RIGHT_HANDED_Y_UP
-        init_params_playback.camera_fps=15
-        # init_params_playback.save('a')
+        # input_type = sl.InputType()
+        # input_type.set_from_svo_file(svo_file)
+        # init_params_playback = sl.InitParameters(input_t=input_type, svo_real_time_mode=True)
+        # # init_params_playback = sl.InitParameters()
+        # # init_params_playback.set_from_svo_file(svo_file)
+        # init_params_playback.camera_resolution = sl.RESOLUTION.HD1080  # Use HD1080 video mode
+        # init_params_playback.coordinate_units = sl.UNIT.METER          # Set coordinate units
+        # init_params_live.depth_mode = sl.DEPTH_MODE.ULTRA
+        # init_params_playback.coordinate_system = sl.COORDINATE_SYSTEM.RIGHT_HANDED_Y_UP
+        # init_params_playback.camera_fps=15
+        # # init_params_playback.save('a')
+        init_params_playback=self.init_params_live
+        init_params_playback.svo_real_time_mode = real_time_mode
+        init_params_playback.set_from_svo_file(svo_file)
+
+        status = zed_playback.open(init_params_playback)
+        if status != sl.ERROR_CODE.SUCCESS:
+            print("ZED playback is not connected")
+        else:
+            print("ZED playback is connected")
+            self.print_camera_information(zed_playback.get_camera_information())
+
 
         print(f'ZED playback: {svo_file}')
         
@@ -224,18 +223,15 @@ class ZED_body:
         zed_error = zed_playback.enable_object_detection(self.obj_param)
         print(zed_error)
         
-        status = zed_playback.open(init_params_playback)
-        if status != sl.ERROR_CODE.SUCCESS:
-            print("ZED playback is not connected")
-        else:
-            print("ZED playback is connected")
-            self.print_camera_information(zed_playback.get_camera_information())
-
+        if step_by_step is not None:
+            print(f"position set to: {step_by_step}")
+            zed_playback.set_svo_position(step_by_step)
+        
+        
         while loopEvent.is_set():
             
             if playbackStartEvent.is_set() or is_firstFRAME:
             
-                print(f"fps: {zed_playback.get_current_fps()}")
                 status=zed_playback.grab()
                 if status == sl.ERROR_CODE.SUCCESS:
                     # Read side by side frames stored in the SVO
@@ -249,8 +245,9 @@ class ZED_body:
                     cv_viewer.render_2D(image_left_playback_ocv,self.image_scale,bodies.object_list, self.obj_param.enable_tracking, self.obj_param.body_format)
                     
                     svo_position = zed_playback.get_svo_position();
+                    print(f"POS: {svo_position}")
                     cur_frame={'image_ocv':image_left_playback_ocv.copy(),
-                               'bodypoints':bodies.object_list,
+                               'bodypoints':bodies.object_list.copy(),
                                'position':svo_position}
                     # check if the queue has space
                     if not playback_queue.full():
@@ -258,7 +255,10 @@ class ZED_body:
                     	playback_queue.put_nowait(cur_frame)
                     else:
                         print('live queue full')
-                   
+                    
+                    if step_by_step is not None: 
+                        playbackStartEvent.clear()
+                       
                    
                     # print(svo_position)
                 elif status == sl.ERROR_CODE.END_OF_SVOFILE_REACHED:
@@ -268,11 +268,18 @@ class ZED_body:
                 else:
                     print("SVO reading error")
                     self.playbackOn.clear()
-                    
-                
+            
             if is_firstFRAME:
-                zed_playback.set_svo_position(0)
-                is_firstFRAME=False
+                if step_by_step is None:                    
+                    zed_playback.set_svo_position(0)
+                    is_firstFRAME=False   
+                else:
+                    zed_playback.set_svo_position(step_by_step)
+                    is_firstFRAME=False   
+                    
+            if step_by_step is not None:  
+                playbackStartEvent.wait(5)
+                
                 
         svo_image.free(sl.MEM.CPU)
         zed_playback.close()

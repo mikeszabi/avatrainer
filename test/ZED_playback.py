@@ -19,7 +19,7 @@ input_path = r'../store/test.svo' #sys.argv[0]
 init_1 = sl.InitParameters()
 init_1.set_from_svo_file(r'../store/test.svo')
 
-svo_file=r'../store/a1_2023_06_21_10_52_36.svo'
+svo_file=r'../store/biceps_cur_1_2023_06_23_11_16_25.svo'
 
 
 init_2 = sl.InitParameters()
