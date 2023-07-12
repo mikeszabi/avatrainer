@@ -12,6 +12,7 @@ import threading
 import queue
 import zed_wrapper
 from oks import oks
+# from bones import run
 from cv_viewer.utils import *
 import cv_viewer.tracking_viewer as cv_viewer
 
@@ -112,6 +113,7 @@ while key != 27:  # for esc
        
         ###
         obj_left=bodies_obj_list_left[0]
+        # run(obj_left)
         obj_right=bodies_obj_list_right[0]
         
         visibility=np.isnan(np.sum(obj_left.keypoint,axis=1))*np.isnan(np.sum(obj_right.keypoint,axis=1))==0
