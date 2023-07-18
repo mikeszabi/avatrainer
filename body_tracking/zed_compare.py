@@ -5,24 +5,23 @@ Created on Tue Jul 11 12:38:16 2023
 
 @author: itqs
 """
-
+import json
 import sys
 sys.path.append(r'../measure')
 import threading
 import queue
 import zed_wrapper
-from oks import oks
-# from bones import run
+from oks import oks_score_bodypoints
+from joint_angles import compare_score_bodypoints
 from cv_viewer.utils import *
 import cv_viewer.tracking_viewer as cv_viewer
 
-import pyzed.sl as sl
+# import pyzed.sl as sl
 import cv2
 import numpy as np
-from matplotlib import pyplot as plt
 
-filepath_1=r'../store/kitores_oldal_1_2023_06_23_11_08_58_cut.svo'
-filepath_2=r'../store/kitores_oldal_2_2023_06_23_11_09_27_cut.svo'
+filepath_1=r'../store/lapockazaras_1_2023_06_23_11_20_36_cut.svo'
+filepath_2=r'../store/lapockazaras_2_2023_06_23_11_21_31_cut.svo'
 
 step_by_step=5
 
@@ -106,21 +105,23 @@ while key != 27:  # for esc
         
         # bodies_obj_list[0].keypoint[sl.BODY_PARTS.LEFT_HIP.value]
         
-        cv_viewer.render_2D(image_left_playback_ocv,zb_left.image_scale,bodies_obj_list_left, zb_left.obj_param.enable_tracking, zb_left.obj_param.body_format)
-        cv_viewer.render_2D(image_right_playback_ocv,zb_right.image_scale,bodies_obj_list_right, zb_right.obj_param.enable_tracking, zb_right.obj_param.body_format)
-        image_left_playback_ocv=cv2.putText(image_left_playback_ocv, str(svo_pos_left), (30,30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,0,0), 1, cv2.LINE_AA)
-        image_right_playback_ocv=cv2.putText(image_right_playback_ocv, str(svo_pos_right), (30,30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,0,0), 1, cv2.LINE_AA)
-       
         ###
         obj_left=bodies_obj_list_left[0]
-        # run(obj_left)
         obj_right=bodies_obj_list_right[0]
         
         visibility=np.isnan(np.sum(obj_left.keypoint,axis=1))*np.isnan(np.sum(obj_right.keypoint,axis=1))==0
         
-        obj_key_score=oks(obj_left.keypoint, obj_right.keypoint, visibility)
-        print("OKS", obj_key_score)
+        obj_key_score=oks_score_bodypoints(obj_left, obj_right, visibility)
         
+        angle_diff_score=compare_score_bodypoints(obj_left, obj_right, visibility)
+        
+        
+        #### visualize
+        cv_viewer.render_2D(image_left_playback_ocv,zb_left.image_scale,bodies_obj_list_left, zb_left.obj_param.enable_tracking, zb_left.obj_param.body_format)
+        cv_viewer.render_2D(image_right_playback_ocv,zb_right.image_scale,bodies_obj_list_right, zb_right.obj_param.enable_tracking, zb_right.obj_param.body_format)
+        image_left_playback_ocv=cv2.putText(image_left_playback_ocv, str(svo_pos_left), (30,30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,0,0), 1, cv2.LINE_AA)
+        image_right_playback_ocv=cv2.putText(image_right_playback_ocv, str(svo_pos_right), (30,30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,0,0), 1, cv2.LINE_AA)
+
 
         im_h = cv2.hconcat([image_left_playback_ocv, image_right_playback_ocv])
         if obj_key_score>0.9925:
@@ -128,6 +129,16 @@ while key != 27:  # for esc
         else:
             color=(0,0,255)
         im_h = cv2.putText(im_h, "{0:.3f}".format(obj_key_score), (100,30), cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2, cv2.LINE_AA)
+        
+        i=0
+        for k in angle_diff_score:
+            if angle_diff_score[k]<0.5:
+                color=(0,255,0)
+            else:
+                color=(0,0,255)
+            if not np.isnan(angle_diff_score[k]):
+                im_h = cv2.putText(im_h, k + ": " + str(angle_diff_score[k]), (100,60+i), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2, cv2.LINE_AA)
+            i+=25
         # im_h=cv2.cvtColor(im_h, cv2.COLOR_BGR2RGB)
         
         
@@ -145,5 +156,5 @@ while key != 27:  # for esc
 
     
     
-playbackEvent_left.clear()
-playbackEvent_right.clear()
+# playbackEvent_left.clear()
+# playbackEvent_right.clear()

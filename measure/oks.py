@@ -9,6 +9,7 @@ Created on Wed Jul 12 13:36:59 2023
 import numpy as np
 
 
+
 def oks(y_true, y_pred, visibility):
     # You might want to set these global constant
     # outside the function scope
@@ -29,6 +30,10 @@ def oks(y_true, y_pred, visibility):
     denominator = np.ma.sum(v2_m)
     return numerator / denominator
 
+
+def oks_score_bodypoints(obj_left,obj_right,visibility):
+    oks_score=oks(obj_left.keypoint,obj_right.keypoint,visibility)
+    return oks_score
 
 # if __name__ == "__main__":
 #     IMAGE_SIZE_IN_PIXEL = 50
