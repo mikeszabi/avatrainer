@@ -31,7 +31,7 @@ import ogl_viewer.viewer as gl
 import cv_viewer.tracking_viewer as cv_viewer
 import numpy as np
 
-filepath=r'../store/kitores_oldal_2_2023_06_23_11_09_27.svo'
+filepath=r'../store/kitores_oldal_2_2023_06_23_11_09_27_cut.svo'
 from_file=True
 
 if __name__ == "__main__":
@@ -69,7 +69,7 @@ if __name__ == "__main__":
     obj_param = sl.ObjectDetectionParameters()
     obj_param.enable_body_fitting = True            # Smooth skeleton move
     obj_param.enable_tracking = False                # Track people across images flow
-    obj_param.detection_model = sl.DETECTION_MODEL.HUMAN_BODY_FAST
+    obj_param.detection_model = sl.DETECTION_MODEL.HUMAN_BODY_ACCURATE
     obj_param.body_format = sl.BODY_FORMAT.POSE_18 # Choose the BODY_FORMAT you wish to use
 
     # Enable Object Detection module

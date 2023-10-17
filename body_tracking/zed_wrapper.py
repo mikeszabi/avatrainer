@@ -56,7 +56,7 @@ class ZED_body:
         self.obj_param = sl.ObjectDetectionParameters()
         self.obj_param.enable_body_fitting = True            # Smooth skeleton move
         self.obj_param.enable_tracking = False                # Track people across images flow
-        self.obj_param.detection_model = sl.DETECTION_MODEL.HUMAN_BODY_FAST 
+        self.obj_param.detection_model = sl.DETECTION_MODEL.HUMAN_BODY_ACCURATE
         self.obj_param.body_format = sl.BODY_FORMAT.POSE_18  # Choose the BODY_FORMAT you wish to use
         
         self.recordingParameters = sl.RecordingParameters()
@@ -147,7 +147,7 @@ class ZED_body:
                     print("ZED is not recording")
                     is_Recording=False
                     svo_position=0
-            print(f"fps: {zed_live.get_current_fps()}")
+            #print(f"fps: {zed_live.get_current_fps()}")
             
             if zed_live.grab() == sl.ERROR_CODE.SUCCESS:
                 zed_live.retrieve_image(live_image,  sl.VIEW.LEFT, sl.MEM.CPU, self.display_resolution)

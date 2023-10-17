@@ -26,6 +26,26 @@ Created on Wed Jul 12 16:41:52 2023
  <BODY_PARTS.RIGHT_EAR: 16>,
  <BODY_PARTS.LEFT_EAR: 17>,
  <BODY_PARTS.LAST: 18>]
+[(<BODY_PARTS.NOSE: 0>, <BODY_PARTS.NECK: 1>),
+ (<BODY_PARTS.NECK: 1>, <BODY_PARTS.RIGHT_SHOULDER: 2>),
+ (<BODY_PARTS.RIGHT_SHOULDER: 2>, <BODY_PARTS.RIGHT_ELBOW: 3>),
+ (<BODY_PARTS.RIGHT_ELBOW: 3>, <BODY_PARTS.RIGHT_WRIST: 4>),
+ (<BODY_PARTS.NECK: 1>, <BODY_PARTS.LEFT_SHOULDER: 5>),
+ (<BODY_PARTS.LEFT_SHOULDER: 5>, <BODY_PARTS.LEFT_ELBOW: 6>),
+ (<BODY_PARTS.LEFT_ELBOW: 6>, <BODY_PARTS.LEFT_WRIST: 7>),
+ (<BODY_PARTS.RIGHT_SHOULDER: 2>, <BODY_PARTS.RIGHT_HIP: 8>),
+ (<BODY_PARTS.RIGHT_HIP: 8>, <BODY_PARTS.RIGHT_KNEE: 9>),
+ (<BODY_PARTS.RIGHT_KNEE: 9>, <BODY_PARTS.RIGHT_ANKLE: 10>),
+ (<BODY_PARTS.LEFT_SHOULDER: 5>, <BODY_PARTS.LEFT_HIP: 11>),
+ (<BODY_PARTS.LEFT_HIP: 11>, <BODY_PARTS.LEFT_KNEE: 12>),
+ (<BODY_PARTS.LEFT_KNEE: 12>, <BODY_PARTS.LEFT_ANKLE: 13>),
+ (<BODY_PARTS.RIGHT_SHOULDER: 2>, <BODY_PARTS.LEFT_SHOULDER: 5>),
+ (<BODY_PARTS.RIGHT_HIP: 8>, <BODY_PARTS.LEFT_HIP: 11>),
+ (<BODY_PARTS.NOSE: 0>, <BODY_PARTS.RIGHT_EYE: 14>),
+ (<BODY_PARTS.RIGHT_EYE: 14>, <BODY_PARTS.RIGHT_EAR: 16>),
+ (<BODY_PARTS.NOSE: 0>, <BODY_PARTS.LEFT_EYE: 15>),
+ (<BODY_PARTS.LEFT_EYE: 15>, <BODY_PARTS.LEFT_EAR: 17>)]
+
 """
 
 import pyzed.sl as sl
@@ -38,11 +58,11 @@ import utils
 
 
 
-def obj2kpts(obj):
-    kpts=np.empty([3,18])
-    for i in range(0,len(obj.keypoint)):
-        kpts[:,i]=obj.keypoint[i]  
-    return kpts
+# def obj2kpts(obj):
+#     kpts=np.empty([3,18])
+#     for i in range(0,len(obj.keypoint)):
+#         kpts[:,i]=obj.keypoint[i]  
+#     return kpts
 
 def convert_to_dictionary(kpts):
     #its easier to manipulate keypoints by joint name
@@ -69,13 +89,11 @@ def convert_to_dictionary(kpts):
     return kpts_dict
 
 
-def add_hips_and_NECK(kpts_dict):
+def add_hips_and_HIERARCHY(kpts_dict):
     #we add two new keypoints which are the mid point between the hips and mid point between the shoulders
 
     #add hips kpts
-    difference = kpts_dict['LEFT_HIP'] - kpts_dict['RIGHT_HIP']
-    difference = difference/2
-    hips = kpts_dict['RIGHT_HIP'] + difference
+    hips = kpts_dict['RIGHT_HIP'] + (kpts_dict['LEFT_HIP'] - kpts_dict['RIGHT_HIP'])/2
     kpts_dict['hips'] = hips
     kpts_dict['joints'].append('hips')
 
@@ -312,42 +330,43 @@ def calculate_joint_angles(kpts_dict):
         return
 
 #draw the pose from original data
-# def draw_skeleton_from_joint_coordinates(kpts_dict):
+from matplotlib import pyplot as plt
+def draw_skeleton_from_joint_coordinates(kpts_dict):
 
-#     fig = plt.figure()
-#     ax = fig.add_subplot(111, projection='3d')
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
 
-#     connections = [['hips', 'LEFT_HIP'], ['LEFT_HIP', 'LEFT_KNEE'], ['LEFT_KNEE', 'LEFT_ANKLE'],
-#                    ['hips', 'RIGHT_HIP'], ['RIGHT_HIP', 'RIGHT_KNEE'], ['RIGHT_KNEE', 'RIGHT_ANKLE'],
-#                    ['hips', 'NECK'], ['NECK', 'LEFT_SHOULDER'], ['LEFT_SHOULDER', 'LEFT_ELBOW'], ['LEFT_ELBOW', 'LEFT_WRIST'],
-#                    ['NECK', 'RIGHT_SHOULDER'], ['RIGHT_SHOULDER', 'RIGHT_ELBOW'], ['RIGHT_ELBOW', 'RIGHT_WRIST']
-#                   ]
+    connections = [['hips', 'LEFT_HIP'], ['LEFT_HIP', 'LEFT_KNEE'], ['LEFT_KNEE', 'LEFT_ANKLE'],
+                    ['hips', 'RIGHT_HIP'], ['RIGHT_HIP', 'RIGHT_KNEE'], ['RIGHT_KNEE', 'RIGHT_ANKLE'],
+                    ['hips', 'NECK'], ['NECK', 'LEFT_SHOULDER'], ['LEFT_SHOULDER', 'LEFT_ELBOW'], ['LEFT_ELBOW', 'LEFT_WRIST'],
+                    ['NECK', 'RIGHT_SHOULDER'], ['RIGHT_SHOULDER', 'RIGHT_ELBOW'], ['RIGHT_ELBOW', 'RIGHT_WRIST']
+                  ]
 
-#     # for framenum in range(kpts_dict['LEFT_HIP'].shape[0]):
-#     #     print(framenum)
-#     #     if framenum%2 == 0: continue #skip every 2nd frame
+    # for framenum in range(kpts_dict['LEFT_HIP'].shape[0]):
+    #     print(framenum)
+    #     if framenum%2 == 0: continue #skip every 2nd frame
 
-#     for _j in kpts_dict['joints']:
-#         if _j == 'hips': continue
-#         _p = kpts_dict['hierarchy'][_j][0] #get the name of the parent joint
-#         r1 = kpts_dict[_p]
-#         r2 = kpts_dict[_j]
-#         plt.plot(xs = [r1[0], r2[0]], ys = [r1[1], r2[1]], zs = [r1[2], r2[2]], color = 'blue')
+    for _j in kpts_dict['joints']:
+        if _j == 'hips': continue
+        _p = kpts_dict['hierarchy'][_j][0] #get the name of the parent joint
+        r1 = kpts_dict[_p]
+        r2 = kpts_dict[_j]
+        plt.plot(xs = [r1[0], r2[0]], ys = [r1[1], r2[1]], zs = [r1[2], r2[2]], color = 'blue')
 
-#     #ax.set_axis_off()
-#     ax.set_xticks([])
-#     ax.set_yticks([])
-#     ax.set_zticks([])
+    #ax.set_axis_off()
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_zticks([])
 
-#     ax.set_xlim3d(-10, 10)
-#     ax.set_xlabel('x')
-#     ax.set_ylim3d(-10, 10)
-#     ax.set_ylabel('y')
-#     ax.set_zlim3d(-10, 10)
-#     ax.set_zlabel('z')
-#     plt.pause(0.1)
-#     # ax.cla()
-#     # plt.close()
+    ax.set_xlim3d(-10, 10)
+    ax.set_xlabel('x')
+    ax.set_ylim3d(-10, 10)
+    ax.set_ylabel('y')
+    ax.set_zlim3d(-10, 10)
+    ax.set_zlabel('z')
+    plt.pause(0.1)
+    # ax.cla()
+    # plt.close()
 
 #recalculate joint positions from calculated joint angles and draw
 # def draw_skeleton_from_joint_angles(kpts_dict):
@@ -397,7 +416,7 @@ def calculate_joint_angles(kpts_dict):
 
 def calculate(obj):
     
-    kpts=obj2kpts(obj)
+    kpts=obj.keypoint.transpose() #obj2kpts(obj)
     # if len(sys.argv) != 2:
     #     print('Call program with input pose file')
     #     quit()
@@ -405,14 +424,14 @@ def calculate(obj):
     # filename = sys.argv[1]
     # kpts = read_keypoints(filename)
 
-    #rotate to orient the pose better
+    #rotate to orient the pose better - DO WE NEED THIS????
     R = utils.get_R_z(np.pi/2)
     # for framenum in range(kpts.shape[0]):
     for kpt_num in range(kpts.shape[1]):
         kpts[:,kpt_num] = R @ kpts[:,kpt_num]
 
     kpts_dict = convert_to_dictionary(kpts)
-    add_hips_and_NECK(kpts_dict)
+    add_hips_and_HIERARCHY(kpts_dict)
     # filtered_kpts = median_filter(kpts_dict)
     get_bone_lengths(kpts_dict)
     get_base_skeleton(kpts_dict)

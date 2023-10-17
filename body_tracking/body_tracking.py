@@ -68,7 +68,7 @@ if __name__ == "__main__":
     obj_param = sl.ObjectDetectionParameters()
     obj_param.enable_body_fitting = True            # Smooth skeleton move
     obj_param.enable_tracking = False                # Track people across images flow
-    obj_param.detection_model = sl.DETECTION_MODEL.HUMAN_BODY_FAST 
+    obj_param.detection_model = sl.DETECTION_MODEL.HUMAN_BODY_ACCURATE #HUMAN_BODY_FAST 
     obj_param.body_format = sl.BODY_FORMAT.POSE_18  # Choose the BODY_FORMAT you wish to use
 
     # Enable Object Detection module

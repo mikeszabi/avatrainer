@@ -20,8 +20,26 @@ import cv_viewer.tracking_viewer as cv_viewer
 import cv2
 import numpy as np
 
-filepath_1=r'../store/lapockazaras_1_2023_06_23_11_20_36_cut.svo'
-filepath_2=r'../store/lapockazaras_2_2023_06_23_11_21_31_cut.svo'
+joint_treshold=0.25
+
+keypoints_to_index = {'LEFT_HIP': sl.BODY_PARTS.LEFT_HIP.value,
+                      'RIGHT_HIP': sl.BODY_PARTS.RIGHT_HIP.value,
+                      'LEFT_KNEE': sl.BODY_PARTS.LEFT_KNEE.value,
+                      'RIGHT_KNEE': sl.BODY_PARTS.RIGHT_KNEE.value, 
+                      'LEFT_ANKLE': sl.BODY_PARTS.LEFT_ANKLE.value, 
+                      'RIGHT_ANKLE': sl.BODY_PARTS.RIGHT_ANKLE.value, 
+                      'LEFT_SHOULDER': sl.BODY_PARTS.LEFT_SHOULDER.value,  
+                      'RIGHT_SHOULDER': sl.BODY_PARTS.RIGHT_SHOULDER.value, 
+                      'LEFT_ELBOW': sl.BODY_PARTS.LEFT_ELBOW.value, 
+                      'RIGHT_ELBOW': sl.BODY_PARTS.RIGHT_ELBOW.value, 
+                      'LEFT_WRIST': sl.BODY_PARTS.LEFT_WRIST.value, 
+                      'RIGHT_WRIST': sl.BODY_PARTS.RIGHT_WRIST.value, 
+                      'NECK':sl.BODY_PARTS.NECK.value}
+
+# filepath_1=r'../store/labemeles_hatra_1_2023_06_23_11_10_42_cut.svo'
+# filepath_2=r'../store/labemeles_hatra_2_2023_06_23_11_11_12_cut.svo'
+filepath_1=r'../store_orig/labdadobas_1good_2023_10_03_12_17_07.svo'
+filepath_2=r'../store_orig/labdadobas_2bad_2023_10_03_12_17_07.svo'
 
 step_by_step=5
 
@@ -111,7 +129,7 @@ while key != 27:  # for esc
         
         visibility=np.isnan(np.sum(obj_left.keypoint,axis=1))*np.isnan(np.sum(obj_right.keypoint,axis=1))==0
         
-        obj_key_score=oks_score_bodypoints(obj_left, obj_right, visibility)
+        # obj_key_score=oks_score_bodypoints(obj_left, obj_right, visibility)
         
         angle_diff_score=compare_score_bodypoints(obj_left, obj_right, visibility)
         
@@ -119,28 +137,36 @@ while key != 27:  # for esc
         #### visualize
         cv_viewer.render_2D(image_left_playback_ocv,zb_left.image_scale,bodies_obj_list_left, zb_left.obj_param.enable_tracking, zb_left.obj_param.body_format)
         cv_viewer.render_2D(image_right_playback_ocv,zb_right.image_scale,bodies_obj_list_right, zb_right.obj_param.enable_tracking, zb_right.obj_param.body_format)
+        
         image_left_playback_ocv=cv2.putText(image_left_playback_ocv, str(svo_pos_left), (30,30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,0,0), 1, cv2.LINE_AA)
         image_right_playback_ocv=cv2.putText(image_right_playback_ocv, str(svo_pos_right), (30,30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,0,0), 1, cv2.LINE_AA)
 
-
         im_h = cv2.hconcat([image_left_playback_ocv, image_right_playback_ocv])
-        if obj_key_score>0.9925:
-            color=(0,255,0)
-        else:
-            color=(0,0,255)
-        im_h = cv2.putText(im_h, "{0:.3f}".format(obj_key_score), (100,30), cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2, cv2.LINE_AA)
-        
+
+
         i=0
-        for k in angle_diff_score:
-            if angle_diff_score[k]<0.5:
-                color=(0,255,0)
-            else:
-                color=(0,0,255)
-            if not np.isnan(angle_diff_score[k]):
-                im_h = cv2.putText(im_h, k + ": " + str(angle_diff_score[k]), (100,60+i), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2, cv2.LINE_AA)
+        for k in keypoints_to_index.keys():
+            if k in angle_diff_score.keys():
+                if angle_diff_score[k]<joint_treshold:
+                    color=(0,255,0)
+                else:
+                    color=(0,0,255)
+                if not np.isnan(angle_diff_score[k]):
+                    im_h = cv2.putText(im_h, k + ": " + str(angle_diff_score[k]), (100,60+i), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2, cv2.LINE_AA)
+                    
+                    ind=keypoints_to_index[k]
+                    center=(int(obj_right.keypoint_2d[ind][0]*zb_right.image_scale[0]+im_h.shape[1]/2),int(obj_right.keypoint_2d[ind][1]*zb_right.image_scale[1]))
+                    im_h=cv2.circle(im_h, center, 3, color, 2)
             i+=25
-        # im_h=cv2.cvtColor(im_h, cv2.COLOR_BGR2RGB)
         
+
+        # if obj_key_score>0.9925:
+        #     color=(0,255,0)
+        # else:
+        #     color=(0,0,255)
+        #im_h = cv2.putText(im_h, "{0:.3f}".format(obj_key_score), (100,30), cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2, cv2.LINE_AA)
+
+        # im_h=cv2.cvtColor(im_h, cv2.COLOR_BGR2RGB)
         
     ###
     

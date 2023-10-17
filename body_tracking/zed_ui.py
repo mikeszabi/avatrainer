@@ -259,6 +259,7 @@ class ZED_video_player:
         if not self.liveEvent_left.is_set():
             if not self.thread_left.is_alive():
                 file_name=self.rt_save_file.get('1.0','end-1c')
+                print(file_name)
                 
                 if len(file_name):
                     self.left_fn.config(text=file_name)
@@ -344,6 +345,8 @@ class ZED_video_player:
     def onAppClose(self):
         # set the stop event, cleanup the camera, and allow the rest of
         # the quit process to continue
+        self.liveEvent_left.clear()
+        self.recordEvent_left.clear()
         self.mainstopEvent.set()
         print("[INFO] closing...")
         # if self.mainstopEvent is not None:
