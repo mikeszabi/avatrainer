@@ -3,121 +3,24 @@
 """
 Created on Wed Jul 12 16:41:52 2023
 
-@author: itqs
+@author: mikeszabi
 """
 
-"""
-[<BODY_PARTS.NOSE: 0>,
- <BODY_PARTS.NECK: 1>,
- <BODY_PARTS.RIGHT_SHOULDER: 2>,
- <BODY_PARTS.RIGHT_ELBOW: 3>,
- <BODY_PARTS.RIGHT_WRIST: 4>,
- <BODY_PARTS.LEFT_SHOULDER: 5>,
- <BODY_PARTS.LEFT_ELBOW: 6>,
- <BODY_PARTS.LEFT_WRIST: 7>,
- <BODY_PARTS.RIGHT_HIP: 8>,
- <BODY_PARTS.RIGHT_KNEE: 9>,
- <BODY_PARTS.RIGHT_ANKLE: 10>,
- <BODY_PARTS.LEFT_HIP: 11>,
- <BODY_PARTS.LEFT_KNEE: 12>,
- <BODY_PARTS.LEFT_ANKLE: 13>,
- <BODY_PARTS.RIGHT_EYE: 14>,
- <BODY_PARTS.LEFT_EYE: 15>,
- <BODY_PARTS.RIGHT_EAR: 16>,
- <BODY_PARTS.LEFT_EAR: 17>,
- <BODY_PARTS.LAST: 18>]
-[(<BODY_PARTS.NOSE: 0>, <BODY_PARTS.NECK: 1>),
- (<BODY_PARTS.NECK: 1>, <BODY_PARTS.RIGHT_SHOULDER: 2>),
- (<BODY_PARTS.RIGHT_SHOULDER: 2>, <BODY_PARTS.RIGHT_ELBOW: 3>),
- (<BODY_PARTS.RIGHT_ELBOW: 3>, <BODY_PARTS.RIGHT_WRIST: 4>),
- (<BODY_PARTS.NECK: 1>, <BODY_PARTS.LEFT_SHOULDER: 5>),
- (<BODY_PARTS.LEFT_SHOULDER: 5>, <BODY_PARTS.LEFT_ELBOW: 6>),
- (<BODY_PARTS.LEFT_ELBOW: 6>, <BODY_PARTS.LEFT_WRIST: 7>),
- (<BODY_PARTS.RIGHT_SHOULDER: 2>, <BODY_PARTS.RIGHT_HIP: 8>),
- (<BODY_PARTS.RIGHT_HIP: 8>, <BODY_PARTS.RIGHT_KNEE: 9>),
- (<BODY_PARTS.RIGHT_KNEE: 9>, <BODY_PARTS.RIGHT_ANKLE: 10>),
- (<BODY_PARTS.LEFT_SHOULDER: 5>, <BODY_PARTS.LEFT_HIP: 11>),
- (<BODY_PARTS.LEFT_HIP: 11>, <BODY_PARTS.LEFT_KNEE: 12>),
- (<BODY_PARTS.LEFT_KNEE: 12>, <BODY_PARTS.LEFT_ANKLE: 13>),
- (<BODY_PARTS.RIGHT_SHOULDER: 2>, <BODY_PARTS.LEFT_SHOULDER: 5>),
- (<BODY_PARTS.RIGHT_HIP: 8>, <BODY_PARTS.LEFT_HIP: 11>),
- (<BODY_PARTS.NOSE: 0>, <BODY_PARTS.RIGHT_EYE: 14>),
- (<BODY_PARTS.RIGHT_EYE: 14>, <BODY_PARTS.RIGHT_EAR: 16>),
- (<BODY_PARTS.NOSE: 0>, <BODY_PARTS.LEFT_EYE: 15>),
- (<BODY_PARTS.LEFT_EYE: 15>, <BODY_PARTS.LEFT_EAR: 17>)]
 
-"""
+
+
+
 
 import pyzed.sl as sl
 
 import numpy as np
 # import sys
 import utils
-# import matplotlib.pyplot as plt
-# from mpl_toolkits.mplot3d import Axes3D
+import body_keypoints
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 
-
-# def obj2kpts(obj):
-#     kpts=np.empty([3,18])
-#     for i in range(0,len(obj.keypoint)):
-#         kpts[:,i]=obj.keypoint[i]  
-#     return kpts
-
-def convert_to_dictionary(kpts):
-    #its easier to manipulate keypoints by joint name
-    keypoints_to_index = {'LEFT_HIP': sl.BODY_PARTS.LEFT_HIP.value,
-                          'RIGHT_HIP': sl.BODY_PARTS.RIGHT_HIP.value,
-                          'LEFT_KNEE': sl.BODY_PARTS.LEFT_KNEE.value,
-                          'RIGHT_KNEE': sl.BODY_PARTS.RIGHT_KNEE.value, 
-                          'LEFT_ANKLE': sl.BODY_PARTS.LEFT_ANKLE.value, 
-                          'RIGHT_ANKLE': sl.BODY_PARTS.RIGHT_ANKLE.value, 
-                          'LEFT_SHOULDER': sl.BODY_PARTS.LEFT_SHOULDER.value,  
-                          'RIGHT_SHOULDER': sl.BODY_PARTS.RIGHT_SHOULDER.value, 
-                          'LEFT_ELBOW': sl.BODY_PARTS.LEFT_ELBOW.value, 
-                          'RIGHT_ELBOW': sl.BODY_PARTS.RIGHT_ELBOW.value, 
-                          'LEFT_WRIST': sl.BODY_PARTS.LEFT_WRIST.value, 
-                          'RIGHT_WRIST': sl.BODY_PARTS.RIGHT_WRIST.value, 
-                          'NECK':sl.BODY_PARTS.NECK.value}
-
-    kpts_dict = {}
-    for key, k_index in keypoints_to_index.items():
-        kpts_dict[key] = kpts[:,k_index]
-
-    kpts_dict['joints'] = list(keypoints_to_index.keys())
-
-    return kpts_dict
-
-
-def add_hips_and_HIERARCHY(kpts_dict):
-    #we add two new keypoints which are the mid point between the hips and mid point between the shoulders
-
-    #add hips kpts
-    hips = kpts_dict['RIGHT_HIP'] + (kpts_dict['LEFT_HIP'] - kpts_dict['RIGHT_HIP'])/2
-    kpts_dict['hips'] = hips
-    kpts_dict['joints'].append('hips')
-
-
-    # #add NECK kpts
-    # difference = kpts['LEFT_SHOULDER'] - kpts['RIGHT_SHOULDER']
-    # difference = difference/2
-    # NECK = kpts['RIGHT_SHOULDER'] + difference
-    # kpts['NECK'] = NECK
-    # kpts['joints'].append('NECK')
-
-    #define the hierarchy of the joints
-    hierarchy = {'hips': [],
-                 'LEFT_HIP': ['hips'], 'LEFT_KNEE': ['LEFT_HIP', 'hips'], 'LEFT_ANKLE': ['LEFT_KNEE', 'LEFT_HIP', 'hips'],
-                 'RIGHT_HIP': ['hips'], 'RIGHT_KNEE': ['RIGHT_HIP', 'hips'], 'RIGHT_ANKLE': ['RIGHT_KNEE', 'RIGHT_HIP', 'hips'],
-                 'NECK': ['hips'],
-                 'LEFT_SHOULDER': ['NECK', 'hips'], 'LEFT_ELBOW': ['LEFT_SHOULDER', 'NECK', 'hips'], 'LEFT_WRIST': ['LEFT_ELBOW', 'LEFT_SHOULDER', 'NECK', 'hips'],
-                 'RIGHT_SHOULDER': ['NECK', 'hips'], 'RIGHT_ELBOW': ['RIGHT_SHOULDER', 'NECK', 'hips'], 'RIGHT_WRIST': ['RIGHT_ELBOW', 'RIGHT_SHOULDER', 'NECK', 'hips']
-                }
-
-    kpts_dict['hierarchy'] = hierarchy
-    kpts_dict['root_joint'] = 'hips'
-
-    return kpts_dict
 
 #remove jittery keypoints by applying a median filter along each axis
 # def median_filter(kpts_dict, window_size = 3):
@@ -151,7 +54,7 @@ def get_bone_lengths(kpts_dict):
 
     bone_lengths = {}
     for joint in kpts_dict['joints']:
-        if joint == 'hips': continue
+        if joint == 'spine': continue
         parent = kpts_dict['hierarchy'][joint][0]
 
         joint_kpts = kpts_dict[joint]
@@ -163,15 +66,12 @@ def get_bone_lengths(kpts_dict):
         _bone_length = np.median(_bone_lengths)
         bone_lengths[joint] = _bone_length
 
-        # plt.hist(bone_lengths, bins = 25)
-        # plt.title(joint)
-        # plt.show()
 
     #print(bone_lengths)
     kpts_dict['bone_lengths'] = bone_lengths
     return
 
-#Here we define the T pose and we normalize the T pose by the length of the hips to NECK distance.
+#Here we define the T pose and we normalize the T pose by the length of the spine to NECK distance.
 def get_base_skeleton(kpts_dict, normalization_bone = 'NECK'):
 
     #this defines a generic skeleton to which we can apply rotations to
@@ -203,7 +103,7 @@ def get_base_skeleton(kpts_dict, normalization_bone = 'NECK'):
 
 
     #base skeleton set by multiplying offset directions by measured bone lengths. In this case we use the average of two sided limbs. E.g left and right hip averaged
-    base_skeleton = {'hips': np.array([0,0,0])}
+    base_skeleton = {'spine': np.array([0,0,0])}
     def _set_length(joint_type):
         base_skeleton['LEFT_' + joint_type] = offset_directions['LEFT_' + joint_type] * ((body_lengths['LEFT_' + joint_type] + body_lengths['RIGHT_' + joint_type])/(2 * normalization))
         base_skeleton['RIGHT_' + joint_type] = offset_directions['RIGHT_' + joint_type] * ((body_lengths['LEFT_' + joint_type] + body_lengths['RIGHT_' + joint_type])/(2 * normalization))
@@ -223,7 +123,7 @@ def get_base_skeleton(kpts_dict, normalization_bone = 'NECK'):
     return
 
 #calculate the rotation of the root joint with respect to the world coordinates
-def get_hips_position_and_rotation(frame_pos, root_joint = 'hips', root_define_joints = ['LEFT_HIP', 'NECK']):
+def get_spine_position_and_rotation(frame_pos, root_joint = 'spine', root_define_joints = ['LEFT_HIP', 'NECK']):
 
     #root position is saved directly
     root_position = frame_pos[root_joint]
@@ -282,16 +182,16 @@ def calculate_joint_angles(kpts_dict):
     for joint in kpts_dict['joints']:
         kpts_dict[joint+'_angles'] = []
 
-    # for framenum in range(kpts_dict['hips'].shape[0]):
+    # for framenum in range(kpts_dict['spine'].shape[0]):
 
         #get the keypoints positions in the current frame
     frame_pos = {}
     for joint in kpts_dict['joints']:
         frame_pos[joint] = kpts_dict[joint]
 
-    root_position, root_rotation = get_hips_position_and_rotation(frame_pos)
+    root_position, root_rotation = get_spine_position_and_rotation(frame_pos)
 
-    frame_rotations = {'hips': root_rotation}
+    frame_rotations = {'spine': root_rotation}
 
     #center the body pose
     for joint in kpts_dict['joints']:
@@ -330,39 +230,29 @@ def calculate_joint_angles(kpts_dict):
         return
 
 #draw the pose from original data
-from matplotlib import pyplot as plt
 def draw_skeleton_from_joint_coordinates(kpts_dict):
 
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
 
-    connections = [['hips', 'LEFT_HIP'], ['LEFT_HIP', 'LEFT_KNEE'], ['LEFT_KNEE', 'LEFT_ANKLE'],
-                    ['hips', 'RIGHT_HIP'], ['RIGHT_HIP', 'RIGHT_KNEE'], ['RIGHT_KNEE', 'RIGHT_ANKLE'],
-                    ['hips', 'NECK'], ['NECK', 'LEFT_SHOULDER'], ['LEFT_SHOULDER', 'LEFT_ELBOW'], ['LEFT_ELBOW', 'LEFT_WRIST'],
-                    ['NECK', 'RIGHT_SHOULDER'], ['RIGHT_SHOULDER', 'RIGHT_ELBOW'], ['RIGHT_ELBOW', 'RIGHT_WRIST']
-                  ]
-
-    # for framenum in range(kpts_dict['LEFT_HIP'].shape[0]):
-    #     print(framenum)
-    #     if framenum%2 == 0: continue #skip every 2nd frame
 
     for _j in kpts_dict['joints']:
-        if _j == 'hips': continue
+        if _j == 'spine': continue
         _p = kpts_dict['hierarchy'][_j][0] #get the name of the parent joint
         r1 = kpts_dict[_p]
         r2 = kpts_dict[_j]
         plt.plot(xs = [r1[0], r2[0]], ys = [r1[1], r2[1]], zs = [r1[2], r2[2]], color = 'blue')
 
     #ax.set_axis_off()
-    ax.set_xticks([])
-    ax.set_yticks([])
-    ax.set_zticks([])
+    # ax.set_xticks([])
+    # ax.set_yticks([])
+    # ax.set_zticks([])
 
-    ax.set_xlim3d(-10, 10)
+    ax.set_xlim3d(-1, 1)
     ax.set_xlabel('x')
-    ax.set_ylim3d(-10, 10)
+    ax.set_ylim3d(-1, 1)
     ax.set_ylabel('y')
-    ax.set_zlim3d(-10, 10)
+    ax.set_zlim3d(-1, 1)
     ax.set_zlabel('z')
     plt.pause(0.1)
     # ax.cla()
@@ -382,15 +272,15 @@ def draw_skeleton_from_joint_coordinates(kpts_dict):
 
 #     #for plotting
 #     for _j in kpts_dict['joints']:
-#         if _j == 'hips': continue
+#         if _j == 'spine': continue
 
 #         #get hierarchy of how the joint connects back to root joint
 #         hierarchy = kpts_dict['hierarchy'][_j]
 
 #         #get the current position of the parent joint
-#         r1 = kpts_dict['hips']/kpts_dict['normalization']
+#         r1 = kpts_dict['spine']/kpts_dict['normalization']
 #         for parent in hierarchy:
-#             if parent == 'hips': continue
+#             if parent == 'spine': continue
 #             R = get_rotation_chain(parent, kpts_dict['hierarchy'][parent], frame_rotations)
 #             r1 = r1 + R @ kpts_dict['base_skeleton'][parent]
 
@@ -414,7 +304,9 @@ def draw_skeleton_from_joint_coordinates(kpts_dict):
 #     # ax.cla()
 #     # plt.close()
 
+# obj=bodies.object_list[0]
 def calculate(obj):
+    # ASSUMING ZED body18 model
     
     kpts=obj.keypoint.transpose() #obj2kpts(obj)
     # if len(sys.argv) != 2:
@@ -424,14 +316,16 @@ def calculate(obj):
     # filename = sys.argv[1]
     # kpts = read_keypoints(filename)
 
-    #rotate to orient the pose better - DO WE NEED THIS????
-    R = utils.get_R_z(np.pi/2)
-    # for framenum in range(kpts.shape[0]):
-    for kpt_num in range(kpts.shape[1]):
-        kpts[:,kpt_num] = R @ kpts[:,kpt_num]
+    #rotate around z axis to orient the pose better - DO WE NEED THIS????
+    # R_z = utils.get_R_z(np.pi/2)
+    #     # # for framenum in range(kpts.shape[0]):
+    #     # for kpt_num in range(kpts.shape[1]):
+    #     #     kpts[:,kpt_num] = R @ kpts[:,kpt_num]
+    # kpts=np.dot(R_z,kpts)
+    
+    kpts_dict=body_keypoints.keypoints_to_dict(kpts)
+    kpts_dict['hierarchy'] = body_keypoints.BODY_18_definitions['hierarchy']
 
-    kpts_dict = convert_to_dictionary(kpts)
-    add_hips_and_HIERARCHY(kpts_dict)
     # filtered_kpts = median_filter(kpts_dict)
     get_bone_lengths(kpts_dict)
     get_base_skeleton(kpts_dict)

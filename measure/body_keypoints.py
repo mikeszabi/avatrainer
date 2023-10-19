@@ -27,6 +27,10 @@ Created on Mon Oct 16 13:57:04 2023
  <BODY_PARTS.LAST: 18>]
 """
 
+import sys
+sys.path.append(r'../body_tracking')
+import json 
+
 import inspect
 import os
 import pyzed.sl as sl
@@ -34,13 +38,47 @@ import cv2
 import pyzed.sl as sl
 import cv_viewer.tracking_viewer as cv_viewer
 
-joint_hierarchy = {'hips': [],
-             'LEFT_HIP': ['hips'], 'LEFT_KNEE': ['LEFT_HIP', 'hips'], 'LEFT_ANKLE': ['LEFT_KNEE', 'LEFT_HIP', 'hips'],
-             'RIGHT_HIP': ['hips'], 'RIGHT_KNEE': ['RIGHT_HIP', 'hips'], 'RIGHT_ANKLE': ['RIGHT_KNEE', 'RIGHT_HIP', 'hips'],
-             'NECK': ['hips'],
-             'LEFT_SHOULDER': ['NECK', 'hips'], 'LEFT_ELBOW': ['LEFT_SHOULDER', 'NECK', 'hips'], 'LEFT_WRIST': ['LEFT_ELBOW', 'LEFT_SHOULDER', 'NECK', 'hips'],
-             'RIGHT_SHOULDER': ['NECK', 'hips'], 'RIGHT_ELBOW': ['RIGHT_SHOULDER', 'NECK', 'hips'], 'RIGHT_WRIST': ['RIGHT_ELBOW', 'RIGHT_SHOULDER', 'NECK', 'hips']
-            }
+
+BODY_18_definitions={'keypoints_to_index' : {'LEFT_HIP': sl.BODY_PARTS.LEFT_HIP.value,
+                      'RIGHT_HIP': sl.BODY_PARTS.RIGHT_HIP.value,
+                      'LEFT_KNEE': sl.BODY_PARTS.LEFT_KNEE.value,
+                      'RIGHT_KNEE': sl.BODY_PARTS.RIGHT_KNEE.value, 
+                      'LEFT_ANKLE': sl.BODY_PARTS.LEFT_ANKLE.value, 
+                      'RIGHT_ANKLE': sl.BODY_PARTS.RIGHT_ANKLE.value, 
+                      'LEFT_SHOULDER': sl.BODY_PARTS.LEFT_SHOULDER.value,  
+                      'RIGHT_SHOULDER': sl.BODY_PARTS.RIGHT_SHOULDER.value, 
+                      'LEFT_ELBOW': sl.BODY_PARTS.LEFT_ELBOW.value, 
+                      'RIGHT_ELBOW': sl.BODY_PARTS.RIGHT_ELBOW.value, 
+                      'LEFT_WRIST': sl.BODY_PARTS.LEFT_WRIST.value, 
+                      'RIGHT_WRIST': sl.BODY_PARTS.RIGHT_WRIST.value, 
+                      'NECK':sl.BODY_PARTS.NECK.value},
+                     'keypoints_relevancy' : {'LEFT_HIP': 100,
+                                           'RIGHT_HIP': 100,
+                                           'LEFT_KNEE': 100,
+                                           'RIGHT_KNEE': 100, 
+                                           'LEFT_ANKLE': 100, 
+                                           'RIGHT_ANKLE': 100, 
+                                           'LEFT_SHOULDER': 100,  
+                                           'RIGHT_SHOULDER': 100, 
+                                           'LEFT_ELBOW': 100, 
+                                           'RIGHT_ELBOW': 100, 
+                                           'LEFT_WRIST': 0, 
+                                           'RIGHT_WRIST': 0, 
+                                           'NECK':0},
+                     'hierarchy' : {'spine': [],
+                                  'LEFT_HIP': ['spine'], 'LEFT_KNEE': ['LEFT_HIP', 'spine'], 'LEFT_ANKLE': ['LEFT_KNEE', 'LEFT_HIP', 'spine'],
+                                  'RIGHT_HIP': ['spine'], 'RIGHT_KNEE': ['RIGHT_HIP', 'spine'], 'RIGHT_ANKLE': ['RIGHT_KNEE', 'RIGHT_HIP', 'spine'],
+                                  'NECK': ['spine'],
+                                  'LEFT_SHOULDER': ['NECK', 'spine'], 'LEFT_ELBOW': ['LEFT_SHOULDER', 'NECK', 'spine'], 'LEFT_WRIST': ['LEFT_ELBOW', 'LEFT_SHOULDER', 'NECK', 'spine'],
+                                  'RIGHT_SHOULDER': ['NECK', 'spine'], 'RIGHT_ELBOW': ['RIGHT_SHOULDER', 'NECK', 'spine'], 'RIGHT_WRIST': ['RIGHT_ELBOW', 'RIGHT_SHOULDER', 'NECK', 'spine']
+                                 },
+                     'connections' : [['spine', 'LEFT_HIP'], ['LEFT_HIP', 'LEFT_KNEE'], ['LEFT_KNEE', 'LEFT_ANKLE'],
+                                     ['spine', 'RIGHT_HIP'], ['RIGHT_HIP', 'RIGHT_KNEE'], ['RIGHT_KNEE', 'RIGHT_ANKLE'],
+                                     ['spine', 'NECK'], ['NECK', 'LEFT_SHOULDER'], ['LEFT_SHOULDER', 'LEFT_ELBOW'], ['LEFT_ELBOW', 'LEFT_WRIST'],
+                                     ['NECK', 'RIGHT_SHOULDER'], ['RIGHT_SHOULDER', 'RIGHT_ELBOW'], ['RIGHT_ELBOW', 'RIGHT_WRIST']
+                                   ]
+                     }
+
 
 def props(obj):
     # class values to dict
@@ -51,7 +89,7 @@ def props(obj):
             pr[name] = value
     return pr
 
-def bodyparts_todict(body_model):
+def bodyparts_to_dict(body_model):
     # enum to dict
     if body_model=='POSE_34':
         body_parts_enum=sl.BODY_PARTS_POSE_34
@@ -59,24 +97,58 @@ def bodyparts_todict(body_model):
         body_parts_enum=sl.BODY_PARTS_POSE_18
     keypoints_to_index={i.name: i.value for i in body_parts_enum} 
     return keypoints_to_index
+
+
     
+def keypoints_to_dict(kpts,keypoints_to_index=BODY_18_definitions['keypoints_to_index']):
+    # using ZED's convention
+    # its easier to manipulate keypoints by joint name
+    # kpts: 3x18 keypoint matrix
+   
+    def add_spine(kpts_dict):
 
+        #add spine kpts
+        spine = kpts_dict['RIGHT_HIP'] + (kpts_dict['LEFT_HIP'] - kpts_dict['RIGHT_HIP'])/2
+        kpts_dict['spine'] = spine
 
-def init_json(sequence_name,camera_info,obj_param):
+        return kpts_dict
+
+    kpts_dict = {}
+    for key, k_index in keypoints_to_index.items():
+        # python indexing starts from 0!
+        kpts_dict[key] = kpts[:,k_index]
+        
+    add_spine(kpts_dict)
+
+    kpts_dict['joints'] = list(keypoints_to_index.keys())
+    kpts_dict['joints'].append('spine')
+    
+    kpts_dict['root_joint'] = 'spine'
+
+    return kpts_dict
+
+################ handle sequence json
+
+def init_json(sequence_name,camera_info,obj_param,body_keypoint_definitions=BODY_18_definitions):
     seq_json={}
+    seq_json['sequence_name']=sequence_name
+    
     seq_json['camera_fps']=camera_info.camera_fps
     seq_json['camera_resolution']=[camera_info.camera_resolution.width,camera_info.camera_resolution.height]
     
     seq_json['detection_model']=obj_param.detection_model.name
     
     seq_json['body_model']=obj_param.body_format.name
-    seq_json['keypoints_to_index']=bodyparts_todict(seq_json['body_model'])
+    seq_json['body_keypoint_definitions']=BODY_18_definitions
+    seq_json['seq_data']={}
     return seq_json
     
 
-def add_frame_body_data(seq_json,body_id,bodies,frame_number):
+def get_frame_body_data(body_id,bodies,svo_position,is_inserted_frame=False):
     body_json={}
     body_json['timestamp_seconds']=bodies.timestamp.get_seconds()
+    body_json['is_inserted_frame']=False
+    body_json['svo_position']=svo_position
 
     tracked_body=None
     if len(bodies.object_list)>0:
@@ -87,16 +159,17 @@ def add_frame_body_data(seq_json,body_id,bodies,frame_number):
                 break
             i+=1
     if tracked_body is not None:
-        body_json['keypoint']=tracked_body.keypoint
-        body_json['keypoint_confidence']=tracked_body.keypoint_confidence
+        body_json['keypoint']=tracked_body.keypoint.tolist()
+        body_json['keypoint_confidence']=tracked_body.keypoint_confidence.tolist()
     else:
-        body_json['keypoints']=[]
+        body_json['keypoint']=[]
         body_json['keypoint_confidence']=[]
+    return body_json
     
     
 
-filepath=r'../store/kitores_oldal_2_2023_06_23_11_09_27_cut.svo'
-visualize_on=False
+filepath=r'../store/terdfelhuzas_right_front_2023_10_17_14_15_24.svo'
+visualize_on=True
 
 def main():
 
@@ -176,8 +249,10 @@ def main():
             c=cv2.waitKey(10)
         
         svo_position = zed.get_svo_position()
+        print(svo_position)
         
-        add_frame_body_data(seq_json,body_id,bodies,svo_position)
+        body_json=get_frame_body_data(body_id,bodies,svo_position)
+        seq_json['seq_data'][svo_position]=body_json
         
         
         # Grab a new image
@@ -193,6 +268,10 @@ def main():
     zed.close()
     
     
+    out_filepath=filepath.replace('svo','json')
+        
+    with open(out_filepath, "w") as outfile: 
+        json.dump(seq_json, outfile)
 
 
 if __name__ == "__main__":
