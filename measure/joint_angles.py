@@ -125,7 +125,7 @@ def get_base_skeleton(kpts_dict, normalization_bone = 'NECK'):
 #calculate the rotation of the root joint with respect to the world coordinates
 def get_spine_position_and_rotation(frame_pos, root_joint = 'spine', root_define_joints = ['LEFT_HIP', 'NECK']):
 
-    #root position is saved directly
+    #this is the rotation of the spine plane (neck-spine-left hip)
     root_position = frame_pos[root_joint]
 
     #calculate unit vectors of root joint
@@ -184,7 +184,8 @@ def calculate_joint_angles(kpts_dict):
 
     # for framenum in range(kpts_dict['spine'].shape[0]):
 
-        #get the keypoints positions in the current frame
+    #get the keypoints positions in the current frame
+    #just copying keypoint's from kpts_dict
     frame_pos = {}
     for joint in kpts_dict['joints']:
         frame_pos[joint] = kpts_dict[joint]
@@ -235,15 +236,16 @@ def draw_skeleton_from_joint_coordinates(kpts_dict):
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
 
-
+    
     for _j in kpts_dict['joints']:
+        ax.plot(kpts_dict[_j][0],kpts_dict[_j][1],kpts_dict[_j][2],'ro')
         if _j == 'spine': continue
         _p = kpts_dict['hierarchy'][_j][0] #get the name of the parent joint
         r1 = kpts_dict[_p]
         r2 = kpts_dict[_j]
         plt.plot(xs = [r1[0], r2[0]], ys = [r1[1], r2[1]], zs = [r1[2], r2[2]], color = 'blue')
 
-    #ax.set_axis_off()
+    # ax.set_axis_off()
     # ax.set_xticks([])
     # ax.set_yticks([])
     # ax.set_zticks([])
@@ -252,57 +254,59 @@ def draw_skeleton_from_joint_coordinates(kpts_dict):
     ax.set_xlabel('x')
     ax.set_ylim3d(-1, 1)
     ax.set_ylabel('y')
-    ax.set_zlim3d(-1, 1)
+    ax.set_zlim3d(-1, 0)
     ax.set_zlabel('z')
+
+    ax.view_init(90, 90) 
     plt.pause(0.1)
     # ax.cla()
     # plt.close()
 
 #recalculate joint positions from calculated joint angles and draw
-# def draw_skeleton_from_joint_angles(kpts_dict):
-#     fig = plt.figure()
-#     ax = fig.add_subplot(111, projection='3d')
+def draw_skeleton_from_joint_angles(kpts_dict):
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
 
 
 
-#     #get a dictionary containing the rotations for the current frame
-#     frame_rotations = {}
-#     for joint in kpts_dict['joints']:
-#         frame_rotations[joint] = kpts_dict[joint+'_angles']
+    #get a dictionary containing the rotations for the current frame
+    frame_rotations = {}
+    for joint in kpts_dict['joints']:
+        frame_rotations[joint] = kpts_dict[joint+'_angles']
 
-#     #for plotting
-#     for _j in kpts_dict['joints']:
-#         if _j == 'spine': continue
+    #for plotting
+    for _j in kpts_dict['joints']:
+        if _j == 'spine': continue
 
-#         #get hierarchy of how the joint connects back to root joint
-#         hierarchy = kpts_dict['hierarchy'][_j]
+        #get hierarchy of how the joint connects back to root joint
+        hierarchy = kpts_dict['hierarchy'][_j]
 
-#         #get the current position of the parent joint
-#         r1 = kpts_dict['spine']/kpts_dict['normalization']
-#         for parent in hierarchy:
-#             if parent == 'spine': continue
-#             R = get_rotation_chain(parent, kpts_dict['hierarchy'][parent], frame_rotations)
-#             r1 = r1 + R @ kpts_dict['base_skeleton'][parent]
+        #get the current position of the parent joint
+        r1 = kpts_dict['spine']/kpts_dict['normalization']
+        for parent in hierarchy:
+            if parent == 'spine': continue
+            R = get_rotation_chain(parent, kpts_dict['hierarchy'][parent], frame_rotations)
+            r1 = r1 + R @ kpts_dict['base_skeleton'][parent]
 
-#         #get the current position of the joint. Note: r2 is the final position of the joint. r1 is simply calculated for plotting.
-#         r2 = r1 + get_rotation_chain(hierarchy[0], hierarchy, frame_rotations) @ kpts_dict['base_skeleton'][_j]
-#         plt.plot(xs = [r1[0], r2[0]], ys = [r1[1], r2[1]], zs = [r1[2], r2[2]], color = 'red')
+        #get the current position of the joint. Note: r2 is the final position of the joint. r1 is simply calculated for plotting.
+        r2 = r1 + get_rotation_chain(hierarchy[0], hierarchy, frame_rotations) @ kpts_dict['base_skeleton'][_j]
+        plt.plot(xs = [r1[0], r2[0]], ys = [r1[1], r2[1]], zs = [r1[2], r2[2]], color = 'red')
 
-#     ax.set_xticks([])
-#     ax.set_yticks([])
-#     ax.set_zticks([])
-#     ax.azim = 90
-#     ax.elev = -85
-#     ax.set_title('Pose from joint angles')
-#     ax.set_xlim3d(-4, 4)
-#     ax.set_xlabel('x')
-#     ax.set_ylim3d(-4, 4)
-#     ax.set_ylabel('y')
-#     ax.set_zlim3d(-4, 4)
-#     ax.set_zlabel('z')
-#     # plt.pause(0.01)
-#     # ax.cla()
-#     # plt.close()
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_zticks([])
+    ax.azim = 90
+    ax.elev = -85
+    ax.set_title('Pose from joint angles')
+    ax.set_xlim3d(-4, 4)
+    ax.set_xlabel('x')
+    ax.set_ylim3d(-4, 4)
+    ax.set_ylabel('y')
+    ax.set_zlim3d(-4, 4)
+    ax.set_zlabel('z')
+    # plt.pause(0.01)
+    # ax.cla()
+    # plt.close()
 
 # obj=bodies.object_list[0]
 def calculate(obj):
@@ -317,11 +321,11 @@ def calculate(obj):
     # kpts = read_keypoints(filename)
 
     #rotate around z axis to orient the pose better - DO WE NEED THIS????
-    # R_z = utils.get_R_z(np.pi/2)
+    # R_y = utils.get_R_y(np.pi/2)
     #     # # for framenum in range(kpts.shape[0]):
     #     # for kpt_num in range(kpts.shape[1]):
     #     #     kpts[:,kpt_num] = R @ kpts[:,kpt_num]
-    # kpts=np.dot(R_z,kpts)
+    # kpts=np.dot(R_y,kpts)
     
     kpts_dict=body_keypoints.keypoints_to_dict(kpts)
     kpts_dict['hierarchy'] = body_keypoints.BODY_18_definitions['hierarchy']
@@ -333,6 +337,8 @@ def calculate(obj):
     calculate_joint_angles(kpts_dict)
     #draw_skeleton_from_joint_coordinates(kpts_dict)
     # draw_skeleton_from_joint_angles(kpts_dict)
+    
+    print(180*kpts_dict['RIGHT_KNEE_angles']/np.pi)
     
     return kpts_dict
 
