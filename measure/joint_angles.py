@@ -128,11 +128,12 @@ def get_spine_position_and_rotation(frame_pos, root_joint = 'spine', root_define
     #this is the rotation of the spine plane (neck-spine-left hip)
     root_position = frame_pos[root_joint]
 
-    #calculate unit vectors of root joint
+    #calculate unit vectors of root joint - LEFT HIP and NECK vectors
     root_u = frame_pos[root_define_joints[0]] - frame_pos[root_joint]
     root_u = root_u/np.sqrt(np.sum(np.square(root_u)))
     root_v = frame_pos[root_define_joints[1]] - frame_pos[root_joint]
     root_v = root_v/np.sqrt(np.sum(np.square(root_v)))
+    
     root_w = np.cross(root_u, root_v)
 
     #Make the rotation matrix
@@ -169,7 +170,7 @@ def get_rotation_chain(joint, hierarchy, frame_rotations):
     #this code assumes ZXY rotation order
     R = np.eye(3)
     for parent in hierarchy:
-        angles = frame_rotations[parent][0]
+        angles = frame_rotations[parent]
         _R = utils.get_R_z(angles[0])@utils.get_R_x(angles[1])@utils.get_R_y(angles[2])
         R = R @ _R
 
@@ -220,7 +221,8 @@ def calculate_joint_angles(kpts_dict):
 
     #update dictionary with current angles.
     for joint in kpts_dict['joints']:
-        kpts_dict[joint + '_angles'].append(frame_rotations[joint])
+        # kpts_dict[joint + '_angles'].append(frame_rotations[joint])
+        kpts_dict[joint + '_angles']=frame_rotations[joint]
 
 
     #convert joint angles list to numpy arrays.
@@ -239,6 +241,9 @@ def draw_skeleton_from_joint_coordinates(kpts_dict):
     
     for _j in kpts_dict['joints']:
         ax.plot(kpts_dict[_j][0],kpts_dict[_j][1],kpts_dict[_j][2],'ro')
+        label=np.array2string(180*kpts_dict[_j+'_angles']/np.pi,precision=0)
+        ax.text(kpts_dict[_j][0],kpts_dict[_j][1],kpts_dict[_j][2], # these are the coordinates to position the label
+                 label) # horizontal alignment can be left, right or center
         if _j == 'spine': continue
         _p = kpts_dict['hierarchy'][_j][0] #get the name of the parent joint
         r1 = kpts_dict[_p]
@@ -246,19 +251,20 @@ def draw_skeleton_from_joint_coordinates(kpts_dict):
         plt.plot(xs = [r1[0], r2[0]], ys = [r1[1], r2[1]], zs = [r1[2], r2[2]], color = 'blue')
 
     # ax.set_axis_off()
-    # ax.set_xticks([])
-    # ax.set_yticks([])
-    # ax.set_zticks([])
+    ax.azim = -90
+    ax.elev = 90
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_zticks([])
 
     ax.set_xlim3d(-1, 1)
     ax.set_xlabel('x')
     ax.set_ylim3d(-1, 1)
     ax.set_ylabel('y')
-    ax.set_zlim3d(-1, 0)
+    ax.set_zlim3d(-5, 0)
     ax.set_zlabel('z')
 
-    ax.view_init(90, 90) 
-    plt.pause(0.1)
+    # plt.pause(0.1)
     # ax.cla()
     # plt.close()
 
@@ -266,8 +272,6 @@ def draw_skeleton_from_joint_coordinates(kpts_dict):
 def draw_skeleton_from_joint_angles(kpts_dict):
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
-
-
 
     #get a dictionary containing the rotations for the current frame
     frame_rotations = {}
@@ -296,13 +300,13 @@ def draw_skeleton_from_joint_angles(kpts_dict):
     ax.set_yticks([])
     ax.set_zticks([])
     ax.azim = 90
-    ax.elev = -85
+    ax.elev = -90
     ax.set_title('Pose from joint angles')
-    ax.set_xlim3d(-4, 4)
+    ax.set_xlim3d(-1, 1)
     ax.set_xlabel('x')
-    ax.set_ylim3d(-4, 4)
+    ax.set_ylim3d(-1, 1)
     ax.set_ylabel('y')
-    ax.set_zlim3d(-4, 4)
+    ax.set_zlim3d(-5, 0)
     ax.set_zlabel('z')
     # plt.pause(0.01)
     # ax.cla()
@@ -336,13 +340,13 @@ def calculate(obj):
 
     calculate_joint_angles(kpts_dict)
     #draw_skeleton_from_joint_coordinates(kpts_dict)
-    # draw_skeleton_from_joint_angles(kpts_dict)
-    
-    print(180*kpts_dict['RIGHT_KNEE_angles']/np.pi)
+    #draw_skeleton_from_joint_angles(kpts_dict)
     
     return kpts_dict
 
 def compare_score_bodypoints(obj_left,obj_right,visibility):
+    endpoints=['WRIST','ANKLE']
+    
     kpts_left=calculate(obj_left)
     kpts_right=calculate(obj_right)
     
@@ -352,17 +356,24 @@ def compare_score_bodypoints(obj_left,obj_right,visibility):
    
  
     for joint in sl.BODY_PARTS:
-        joint_angle_name=joint.name+'_angles'
-        if joint_angle_name in kpts_left.keys() and joint_angle_name in kpts_right.keys():
-            if visibility[joint.value]:
-                left_angles=kpts_left[joint_angle_name][0]
-                right_angles=kpts_right[joint_angle_name][0]
-                print(joint.name)
-                print(left_angles*180/np.pi)
-                print(right_angles*180/np.pi)
-                norm=np.linalg.norm(left_angles-right_angles)
-                print(norm)
-                angle_diff_score[joint.name]=np.round(norm*100)/100
+        if np.sum([e in joint.name for e in endpoints])==0: # not in endpoints
+            joint_angle_name=joint.name+'_angles'
+            if joint_angle_name in kpts_left.keys() and joint_angle_name in kpts_right.keys():
+                if visibility[joint.value]:
+                    left_angles=kpts_left[joint_angle_name]
+                    right_angles=kpts_right[joint_angle_name]
+                    
+                    R1=utils.Compose_R_ZXY(left_angles[0], left_angles[1], left_angles[2])
+                    R2=utils.Compose_R_ZXY(right_angles[0], right_angles[1], right_angles[2])
+                    
+                    diff_angle=utils.getAngle(R1, R2)
+                    
+                    print(joint.name)
+                    print(left_angles*180/np.pi)
+                    print(right_angles*180/np.pi)
+
+                    angle_diff_score[joint.name]=np.cos(diff_angle)
+                    print(angle_diff_score)
             
     return angle_diff_score
             

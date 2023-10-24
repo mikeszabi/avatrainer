@@ -97,3 +97,15 @@ def Decompose_R_ZXY(R):
     thetax = np.arctan2(R[2,1], np.sqrt(R[2,0]**2 + R[2,2]**2))
 
     return thetaz, thetay, thetax
+
+def Compose_R_ZXY(thetaz, thetay, thetax):
+    
+    R=np.matmul(get_R_z(thetaz),np.matmul(get_R_x(thetax),get_R_y(thetay)))
+    return R
+
+def getAngle(P, Q):
+    # https://math.stackexchange.com/questions/2113634/comparing-two-rotation-matrices
+    R = np.dot(P, Q.T)
+    cos_theta = (np.trace(R)-1)/2
+    return np.arccos(cos_theta) 
+    

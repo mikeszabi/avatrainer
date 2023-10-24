@@ -7,7 +7,7 @@ Created on Sat Oct 21 16:33:29 2023
 """
 
 import sys
-sys.path.append(r'../body_tracking')
+sys.path.append(r'../measure')
 import json 
 import os
 import pyzed.sl as sl
@@ -19,7 +19,7 @@ import joint_angles
 
 
 
-filepath=r'../store/terdfelhuzas_right_front_2023_10_17_14_15_24.svo'
+filepath=r'../store/lapockazaras_2_2023_06_23_11_21_31_cut.svo'
 visualize_on=True
 
 def main():
@@ -110,7 +110,7 @@ def main():
         status = zed.grab()
         
         obj=bodies.object_list[0]
-        kpts_left=joint_angles.calculate(obj)
+        # kpts_left=joint_angles.calculate(obj)
         
     print("SVO ends with: {0}".format(status))
        
