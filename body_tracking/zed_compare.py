@@ -12,7 +12,7 @@ import threading
 import queue
 import zed_wrapper
 from oks import oks_score_bodypoints
-from joint_angles import compare_score_bodypoints, calculate
+from body_joint_angles import BodyJoints
 from cv_viewer.utils import *
 import cv_viewer.tracking_viewer as cv_viewer
 
@@ -42,6 +42,10 @@ filepath_2=r'../store/terdfelhuzas_left_45degree_2023_10_17_14_16_12.svo'
 # filepath_2=r'../store/terdfelhuzas_right_45degree_2023_10_17_14_16_40.svo'
 # filepath_1=r'../store_orig/labdadobas_1good_2023_10_03_12_17_07.svo'
 # filepath_2=r'../store_orig/labdadobas_2bad_2023_10_03_12_17_07.svo'
+
+bodyjoints_left=BodyJoints()    
+bodyjoints_right=BodyJoints()    
+
 
 step_by_step=5
 
@@ -128,15 +132,17 @@ while key != 27:  # for esc
         ###
         obj_left=bodies_obj_list_left[0]
         obj_right=bodies_obj_list_right[0]
-        
+   
         visibility=np.isnan(np.sum(obj_left.keypoint,axis=1))*np.isnan(np.sum(obj_right.keypoint,axis=1))==0
         
         # obj_key_score=oks_score_bodypoints(obj_left, obj_right, visibility)
         
-        angle_diff_score=compare_score_bodypoints(obj_left, obj_right, visibility)
-        kpts_dict_left=calculate(obj_left)
-        kpts_dict_right=calculate(obj_right)
-       
+        kpts_dict_left=bodyjoints_left.calculate(obj_left)
+        kpts_dict_right=bodyjoints_right.calculate(obj_right)
+
+        angle_diff_score=bodyjoints_left.compare_score_bodypoints(obj_left, obj_right, visibility)
+    
+
         #### visualize
         cv_viewer.render_2D(image_left_playback_ocv,zb_left.image_scale,bodies_obj_list_left, zb_left.obj_param.enable_tracking, zb_left.obj_param.body_format)
         cv_viewer.render_2D(image_right_playback_ocv,zb_right.image_scale,bodies_obj_list_right, zb_right.obj_param.enable_tracking, zb_right.obj_param.body_format)
@@ -155,15 +161,16 @@ while key != 27:  # for esc
                 else:
                     color=(0,0,255)
                 if not np.isnan(angle_diff_score[k]):
-                    im_h = cv2.putText(im_h, k + ": " + np.array2string(angle_diff_score[k],precision=2), (870,60+i), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2, cv2.LINE_AA)
-                    im_h = cv2.putText(im_h, k + ": " + np.array2string(180*kpts_dict_left[k+'_angles']/np.pi,precision=0), (100,60+i), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2, cv2.LINE_AA)
-                    im_h = cv2.putText(im_h, k + ": " + np.array2string(180*kpts_dict_right[k+'_angles']/np.pi,precision=0), (1700,60+i), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2, cv2.LINE_AA)
+                    im_h = cv2.putText(im_h, k + ": " + np.array2string(angle_diff_score[k],precision=2), (850,60+i), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2, cv2.LINE_AA)
+                    im_h = cv2.putText(im_h, k + ": " + np.array2string((180*kpts_dict_left[k+'_angles']/np.pi).astype(int)), (100,60+i), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2, cv2.LINE_AA)
+                    im_h = cv2.putText(im_h, k + ": " + np.array2string((180*kpts_dict_right[k+'_angles']/np.pi).astype(int)), (1680,60+i), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2, cv2.LINE_AA)
            
                     ind=keypoints_to_index[k]
                     center=(int(obj_right.keypoint_2d[ind][0]*zb_right.image_scale[0]+im_h.shape[1]/2),int(obj_right.keypoint_2d[ind][1]*zb_right.image_scale[1]))
                     im_h=cv2.circle(im_h, center, 3, color, 2)
             i+=25
-        
+                     
+       
 
         # if obj_key_score>0.9925:
         #     color=(0,255,0)
@@ -174,7 +181,9 @@ while key != 27:  # for esc
         # im_h=cv2.cvtColor(im_h, cv2.COLOR_BGR2RGB)
         
     ###
-    
+
+        bodyjoints_left.draw_skeleton_from_joint_coordinates()
+        bodyjoints_right.draw_skeleton_from_joint_coordinates()        
       
     if key == 97 or key==115: #a / s
         playbackStartEvent_left.set()
@@ -185,7 +194,7 @@ while key != 27:  # for esc
     cv2.imshow("ZED | 2D View", im_h)
     key=cv2.waitKey(0)
 
-    
+        
     
 # playbackEvent_left.clear()
 # playbackEvent_right.clear()

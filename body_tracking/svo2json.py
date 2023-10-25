@@ -15,14 +15,16 @@ import cv2
 import cv_viewer.tracking_viewer as cv_viewer
 
 import body_keypoints
-import joint_angles
+#import joint_angles
+from body_joint_angles import BodyJoints
 
 
-
-filepath=r'../store/lapockazaras_2_2023_06_23_11_21_31_cut.svo'
-visualize_on=True
+filepath=r'../store/terpeszzar_front_2023_10_17_14_17_41.svo'
+visualize_on=False
 
 def main():
+
+    bodyjoints=BodyJoints()    
 
     # Create a Camera object
     zed = sl.Camera()
@@ -111,18 +113,19 @@ def main():
         
         obj=bodies.object_list[0]
         # kpts_left=joint_angles.calculate(obj)
+        kpts_dict=bodyjoints.calculate(obj)
+        bodyjoints.draw_skeleton_from_joint_coordinates()
         
     print("SVO ends with: {0}".format(status))
        
-
-    cv2.destroyAllWindows()
+    if visualize_on:
+        cv2.destroyAllWindows()
 
     # Disable modules and close camera
     zed.disable_object_detection()
     zed.disable_positional_tracking()
     zed.close()
     
-
     
     out_filepath=filepath.replace('svo','json')
         
