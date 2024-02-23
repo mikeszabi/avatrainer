@@ -32,19 +32,19 @@ import inspect
 import pyzed.sl as sl
 
 
-BODY_18_definitions={'keypoints_to_index' : {'LEFT_HIP': sl.BODY_PARTS.LEFT_HIP.value,
-                      'RIGHT_HIP': sl.BODY_PARTS.RIGHT_HIP.value,
-                      'LEFT_KNEE': sl.BODY_PARTS.LEFT_KNEE.value,
-                      'RIGHT_KNEE': sl.BODY_PARTS.RIGHT_KNEE.value, 
-                      'LEFT_ANKLE': sl.BODY_PARTS.LEFT_ANKLE.value, 
-                      'RIGHT_ANKLE': sl.BODY_PARTS.RIGHT_ANKLE.value, 
-                      'LEFT_SHOULDER': sl.BODY_PARTS.LEFT_SHOULDER.value,  
-                      'RIGHT_SHOULDER': sl.BODY_PARTS.RIGHT_SHOULDER.value, 
-                      'LEFT_ELBOW': sl.BODY_PARTS.LEFT_ELBOW.value, 
-                      'RIGHT_ELBOW': sl.BODY_PARTS.RIGHT_ELBOW.value, 
-                      'LEFT_WRIST': sl.BODY_PARTS.LEFT_WRIST.value, 
-                      'RIGHT_WRIST': sl.BODY_PARTS.RIGHT_WRIST.value, 
-                      'NECK':sl.BODY_PARTS.NECK.value},
+BODY_18_definitions={'keypoints_to_index' : {'LEFT_HIP': sl.BODY_18_PARTS.LEFT_HIP.value,
+                      'RIGHT_HIP': sl.BODY_18_PARTS.RIGHT_HIP.value,
+                      'LEFT_KNEE': sl.BODY_18_PARTS.LEFT_KNEE.value,
+                      'RIGHT_KNEE': sl.BODY_18_PARTS.RIGHT_KNEE.value, 
+                      'LEFT_ANKLE': sl.BODY_18_PARTS.LEFT_ANKLE.value, 
+                      'RIGHT_ANKLE': sl.BODY_18_PARTS.RIGHT_ANKLE.value, 
+                      'LEFT_SHOULDER': sl.BODY_18_PARTS.LEFT_SHOULDER.value,  
+                      'RIGHT_SHOULDER': sl.BODY_18_PARTS.RIGHT_SHOULDER.value, 
+                      'LEFT_ELBOW': sl.BODY_18_PARTS.LEFT_ELBOW.value, 
+                      'RIGHT_ELBOW': sl.BODY_18_PARTS.RIGHT_ELBOW.value, 
+                      'LEFT_WRIST': sl.BODY_18_PARTS.LEFT_WRIST.value, 
+                      'RIGHT_WRIST': sl.BODY_18_PARTS.RIGHT_WRIST.value, 
+                      'NECK':sl.BODY_18_PARTS.NECK.value},
                      'keypoints_relevancy' : {'LEFT_HIP': 100,
                                            'RIGHT_HIP': 100,
                                            'LEFT_KNEE': 100,
@@ -122,16 +122,16 @@ def keypoints_to_dict(kpts,keypoints_to_index=BODY_18_definitions['keypoints_to_
 
 ################ handle sequence json
 
-def init_json(sequence_name,camera_info,obj_param,body_keypoint_definitions=BODY_18_definitions):
+def init_json(sequence_name,camera_info,body_param,body_keypoint_definitions=BODY_18_definitions):
     seq_json={}
     seq_json['sequence_name']=sequence_name
     
-    seq_json['camera_fps']=camera_info.camera_fps
-    seq_json['camera_resolution']=[camera_info.camera_resolution.width,camera_info.camera_resolution.height]
+    seq_json['camera_fps']=camera_info.camera_configuration.fps
+    seq_json['camera_resolution']=[camera_info.camera_configuration.resolution.width,camera_info.camera_configuration.resolution.height]
     
-    seq_json['detection_model']=obj_param.detection_model.name
+    seq_json['detection_model']=body_param.detection_model.name
     
-    seq_json['body_model']=obj_param.body_format.name
+    seq_json['body_model']=body_param.body_format.name
     seq_json['body_keypoint_definitions']=BODY_18_definitions
     seq_json['seq_data']={}
     return seq_json
@@ -144,11 +144,11 @@ def get_frame_body_data(body_id,bodies,svo_position,is_inserted_frame=False):
     body_json['svo_position']=svo_position
 
     tracked_body=None
-    if len(bodies.object_list)>0:
+    if len(bodies.body_list)>0:
         i=0
         while True:
-            if bodies.object_list[i].id==body_id:
-                tracked_body=bodies.object_list[i] # check if any
+            if bodies.body_list[i].id==body_id:
+                tracked_body=bodies.body_list[i] # check if any
                 break
             i+=1
     if tracked_body is not None:

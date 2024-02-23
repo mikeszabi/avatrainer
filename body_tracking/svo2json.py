@@ -20,7 +20,7 @@ from body_joint_angles import BodyJoints
 
 
 filepath=r'../store/terpeszzar_front_2023_10_17_14_17_41.svo'
-visualize_on=False
+visualize_on=True
 
 def main():
 
@@ -36,6 +36,7 @@ def main():
     init_params.depth_mode = sl.DEPTH_MODE.ULTRA
     init_params.coordinate_system = sl.COORDINATE_SYSTEM.RIGHT_HANDED_Y_UP
     
+    
 
     # filepath = sys.argv[1]
     print("Using SVO file: {0}".format(filepath))
@@ -49,39 +50,38 @@ def main():
 
     # Enable Positional tracking (mandatory for object detection)
     positional_tracking_parameters = sl.PositionalTrackingParameters()
-    # If the camera is static, uncomment the following line to have better performances and boxes sticked to the ground.
+    # If the camera is static, uncomment the following line to have better performances
     positional_tracking_parameters.set_as_static = True
     zed.enable_positional_tracking(positional_tracking_parameters)
     
-    obj_param = sl.ObjectDetectionParameters()
-    obj_param.enable_body_fitting = True            # Smooth skeleton move
-    obj_param.enable_tracking = True               # Track people across images flow
-    obj_param.detection_model = sl.DETECTION_MODEL.HUMAN_BODY_ACCURATE
-    obj_param.body_format = sl.BODY_FORMAT.POSE_18 # Choose the BODY_FORMAT you wish to use
+    body_param = sl.BodyTrackingParameters()
+    body_param.enable_tracking = True                # Track people across images flow
+    body_param.enable_body_fitting = False            # Smooth skeleton move
+    body_param.detection_model = sl.BODY_TRACKING_MODEL.HUMAN_BODY_FAST 
+    body_param.body_format = sl.BODY_FORMAT.BODY_18  # Choose the BODY_FORMAT you wish to use
 
     # Enable Object Detection module
-    zed.enable_object_detection(obj_param)
+    zed.enable_body_tracking(body_param)
 
-    obj_runtime_param = sl.ObjectDetectionRuntimeParameters()
-    obj_runtime_param.detection_confidence_threshold = 40
+    body_runtime_param = sl.BodyTrackingRuntimeParameters()
+    body_runtime_param.detection_confidence_threshold = 40
 
     # Get ZED camera information
     camera_info = zed.get_camera_information()
-
-
     # 2D viewer utilities
-    display_resolution = sl.Resolution(min(camera_info.camera_resolution.width, 1280), min(camera_info.camera_resolution.height, 720))
-    image_scale = [display_resolution.width / camera_info.camera_resolution.width
-                 , display_resolution.height / camera_info.camera_resolution.height]
+    display_resolution = sl.Resolution(min(camera_info.camera_configuration.resolution.width, 1280), min(camera_info.camera_configuration.resolution.height, 720))
+    image_scale = [display_resolution.width / camera_info.camera_configuration.resolution.width
+                 , display_resolution.height / camera_info.camera_configuration.resolution.height]
+
 
    
     # Create ZED objects filled in the main loop
-    bodies = sl.Objects()
+    bodies = sl.Bodies()
     image = sl.Mat()
     c=-1
     body_id=None
     
-    seq_json=body_keypoints.init_json(os.path.basename(filepath),camera_info,obj_param)
+    seq_json=body_keypoints.init_json(os.path.basename(filepath),camera_info,body_param)
     
     status=zed.grab()
     while status==sl.ERROR_CODE.SUCCESS:
@@ -89,15 +89,15 @@ def main():
         # Retrieve left image
         zed.retrieve_image(image, sl.VIEW.LEFT, sl.MEM.CPU, display_resolution)
         # Retrieve objects
-        zed.retrieve_objects(bodies, obj_runtime_param)
-        if (body_id is None) and (len(bodies.object_list)>0):
+        zed.retrieve_bodies(bodies, body_runtime_param)
+        if (body_id is None) and (len(bodies.body_list)>0):
             # fixing first seen body id!
-            body_id=bodies.object_list[0].id
+            body_id=bodies.body_list[0].id
 
         # Update OCV view
         if visualize_on:
             image_left_ocv = image.get_data()
-            cv_viewer.render_2D(image_left_ocv,image_scale,bodies.object_list, obj_param.enable_tracking, obj_param.body_format)
+            cv_viewer.render_2D(image_left_ocv,image_scale,bodies.body_list, body_param.enable_tracking, body_param.body_format)
             cv2.imshow("ZED | 2D View", image_left_ocv)
             c=cv2.waitKey(10)
         
@@ -111,7 +111,7 @@ def main():
         # Grab a new image
         status = zed.grab()
         
-        obj=bodies.object_list[0]
+        obj=bodies.body_list[0]
         # kpts_left=joint_angles.calculate(obj)
         kpts_dict=bodyjoints.calculate(obj)
         bodyjoints.draw_skeleton_from_joint_coordinates()

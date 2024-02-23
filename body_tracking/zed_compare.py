@@ -5,6 +5,7 @@ Created on Tue Jul 11 12:38:16 2023
 
 @author: itqs
 """
+import os
 import json
 import sys
 sys.path.append(r'../measure')
@@ -13,6 +14,7 @@ import queue
 import zed_wrapper
 from oks import oks_score_bodypoints
 from body_joint_angles import BodyJoints
+from body_keypoints import BODY_18_definitions
 from cv_viewer.utils import *
 import cv_viewer.tracking_viewer as cv_viewer
 
@@ -22,22 +24,10 @@ import numpy as np
 
 joint_treshold=0.99
 
-keypoints_to_index = {'LEFT_HIP': sl.BODY_PARTS.LEFT_HIP.value,
-                      'RIGHT_HIP': sl.BODY_PARTS.RIGHT_HIP.value,
-                      'LEFT_KNEE': sl.BODY_PARTS.LEFT_KNEE.value,
-                      'RIGHT_KNEE': sl.BODY_PARTS.RIGHT_KNEE.value, 
-                      'LEFT_ANKLE': sl.BODY_PARTS.LEFT_ANKLE.value, 
-                      'RIGHT_ANKLE': sl.BODY_PARTS.RIGHT_ANKLE.value, 
-                      'LEFT_SHOULDER': sl.BODY_PARTS.LEFT_SHOULDER.value,  
-                      'RIGHT_SHOULDER': sl.BODY_PARTS.RIGHT_SHOULDER.value, 
-                      'LEFT_ELBOW': sl.BODY_PARTS.LEFT_ELBOW.value, 
-                      'RIGHT_ELBOW': sl.BODY_PARTS.RIGHT_ELBOW.value, 
-                      'LEFT_WRIST': sl.BODY_PARTS.LEFT_WRIST.value, 
-                      'RIGHT_WRIST': sl.BODY_PARTS.RIGHT_WRIST.value, 
-                      'NECK':sl.BODY_PARTS.NECK.value}
-
 filepath_1=r'../store/terdfelhuzas_left_45degree_2023_10_17_14_16_12.svo'
+print(os.path.isfile(filepath_1))
 filepath_2=r'../store/terdfelhuzas_left_45degree_2023_10_17_14_16_12.svo'
+print(os.path.isfile(filepath_2))
 
 # filepath_2=r'../store/terdfelhuzas_right_45degree_2023_10_17_14_16_40.svo'
 # filepath_1=r'../store_orig/labdadobas_1good_2023_10_03_12_17_07.svo'
@@ -144,8 +134,8 @@ while key != 27:  # for esc
     
 
         #### visualize
-        cv_viewer.render_2D(image_left_playback_ocv,zb_left.image_scale,bodies_obj_list_left, zb_left.obj_param.enable_tracking, zb_left.obj_param.body_format)
-        cv_viewer.render_2D(image_right_playback_ocv,zb_right.image_scale,bodies_obj_list_right, zb_right.obj_param.enable_tracking, zb_right.obj_param.body_format)
+        cv_viewer.render_2D(image_left_playback_ocv,zb_left.image_scale,bodies_obj_list_left, zb_left.body_param.enable_tracking, zb_left.body_param.body_format)
+        cv_viewer.render_2D(image_right_playback_ocv,zb_right.image_scale,bodies_obj_list_right, zb_right.body_param.enable_tracking, zb_right.body_param.body_format)
         
         image_left_playback_ocv=cv2.putText(image_left_playback_ocv, str(svo_pos_left), (30,30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,0,0), 1, cv2.LINE_AA)
         image_right_playback_ocv=cv2.putText(image_right_playback_ocv, str(svo_pos_right), (30,30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,0,0), 1, cv2.LINE_AA)
@@ -154,7 +144,7 @@ while key != 27:  # for esc
 
 
         i=0
-        for k in keypoints_to_index.keys():
+        for k in BODY_18_definitions['keypoints_to_index'].keys():
             if k in angle_diff_score.keys():
                 if angle_diff_score[k]>joint_treshold:
                     color=(0,255,0)
@@ -165,7 +155,7 @@ while key != 27:  # for esc
                     im_h = cv2.putText(im_h, k + ": " + np.array2string((180*kpts_dict_left[k+'_angles']/np.pi).astype(int)), (100,60+i), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2, cv2.LINE_AA)
                     im_h = cv2.putText(im_h, k + ": " + np.array2string((180*kpts_dict_right[k+'_angles']/np.pi).astype(int)), (1680,60+i), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2, cv2.LINE_AA)
            
-                    ind=keypoints_to_index[k]
+                    ind=BODY_18_definitions['keypoints_to_index'][k]
                     center=(int(obj_right.keypoint_2d[ind][0]*zb_right.image_scale[0]+im_h.shape[1]/2),int(obj_right.keypoint_2d[ind][1]*zb_right.image_scale[1]))
                     im_h=cv2.circle(im_h, center, 3, color, 2)
             i+=25
@@ -195,6 +185,6 @@ while key != 27:  # for esc
     key=cv2.waitKey(0)
 
         
-    
+cv2.destroyAllWindows()   
 # playbackEvent_left.clear()
 # playbackEvent_right.clear()

@@ -362,7 +362,7 @@ class BodyJoints:
         # visibility=np.isnan(np.sum(obj_left.keypoint,axis=1))*np.isnan(np.sum(obj_right.keypoint,axis=1))==0
        
      
-        for joint in sl.BODY_PARTS:
+        for joint in sl.BODY_18_PARTS:
             if np.sum([e in joint.name for e in self.endpoints])==0: # not in endpoints
                 joint_angle_name=joint.name+'_angles'
                 if joint_angle_name in kpts_left.keys() and joint_angle_name in kpts_right.keys():

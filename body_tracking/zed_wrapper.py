@@ -53,29 +53,29 @@ class ZED_body:
         # If the camera is static, uncomment the following line to have better performances and boxes sticked to the ground.
         self.positional_tracking_parameters.set_as_static = True
         
-        self.obj_param = sl.ObjectDetectionParameters()
-        self.obj_param.enable_body_fitting = True            # Smooth skeleton move
-        self.obj_param.enable_tracking = False                # Track people across images flow
-        self.obj_param.detection_model = sl.DETECTION_MODEL.HUMAN_BODY_ACCURATE
-        self.obj_param.body_format = sl.BODY_FORMAT.POSE_18  # Choose the BODY_FORMAT you wish to use
+        self.body_param = sl.BodyTrackingParameters()
+        self.body_param.enable_body_fitting = True            # Smooth skeleton move
+        self.body_param.enable_tracking = False                # Track people across images flow
+        self.body_param.detection_model = sl.BODY_TRACKING_MODEL.HUMAN_BODY_ACCURATE
+        self.body_param.body_format = sl.BODY_FORMAT.BODY_18  # Choose the BODY_FORMAT you wish to use
         
         self.recordingParameters = sl.RecordingParameters()
         self.recordingParameters.compression_mode = sl.SVO_COMPRESSION_MODE.H264
         self.recordingParameters.video_filename = os.path.join(self.output_path,'test.svo')
     
-        self.obj_runtime_param = sl.ObjectDetectionRuntimeParameters()
-        self.obj_runtime_param.detection_confidence_threshold = 40
+        self.body_runtime_param = sl.BodyTrackingRuntimeParameters()
+        self.body_runtime_param.detection_confidence_threshold = 40
     
 
         # 2D viewer utilities
-        self.display_resolution = sl.Resolution(min(self.camera_info.camera_resolution.width, 960), min(self.camera_info.camera_resolution.height, 540))
-        self.image_scale = [self.display_resolution.width / self.camera_info.camera_resolution.width
-                     , self.display_resolution.height / self.camera_info.camera_resolution.height]
+        self.display_resolution = sl.Resolution(min(self.camera_info.camera_configuration.resolution.width, 960), min(self.camera_info.camera_configuration.resolution.height, 540))
+        self.image_scale = [self.display_resolution.width / self.camera_info.camera_configuration.resolution.width
+                     , self.display_resolution.height / self.camera_info.camera_configuration.resolution.height]
 
 
     def print_camera_information(self,camera_info):
-        print("Resolution: {0}, {1}.".format(round(camera_info.camera_resolution.width, 2), camera_info.camera_resolution.height))
-        print("Camera FPS: {0}.".format(camera_info.camera_fps))
+        print("Resolution: {0}, {1}.".format(round(camera_info.camera_configuration.resolution.width, 2), camera_info.camera_configuration.resolution.height))
+        print("Camera FPS: {0}.".format(camera_info.camera_configuration.fps))
         print("Firmware: {0}.".format(camera_info.camera_configuration.firmware_version))
         print("Serial number: {0}.\n".format(camera_info.serial_number))
         
@@ -103,7 +103,7 @@ class ZED_body:
         
         zed_live = sl.Camera()
         live_image = sl.Mat()
-        bodies = sl.Objects()
+        bodies = sl.Bodies()
 
         self.recordingParameters.video_filename = os.path.join(self.output_path,svo_file)
 
@@ -119,9 +119,9 @@ class ZED_body:
         # Enable Object Detection and Positional Tracking module
         
         zed_error = zed_live.enable_positional_tracking(self.positional_tracking_parameters)
-        print(self.obj_param)
+        print(self.body_param)
 
-        zed_error = zed_live.enable_object_detection(self.obj_param)
+        zed_error = zed_live.enable_body_tracking(self.body_param)
         print(zed_error)
 
         svo_position=0    
@@ -151,18 +151,18 @@ class ZED_body:
             
             if zed_live.grab() == sl.ERROR_CODE.SUCCESS:
                 zed_live.retrieve_image(live_image,  sl.VIEW.LEFT, sl.MEM.CPU, self.display_resolution)
-                zed_live.retrieve_objects(bodies, self.obj_runtime_param)
+                zed_live.retrieve_bodies(bodies, self.body_runtime_param)
                 #https://www.stereolabs.com/docs/object-detection/using-object-detection/
                 # for obj in bodies.object_list:
                 #     print("{} {}".format(obj.id, obj.position))
                 image_left_live_ocv = live_image.get_data()
-                cv_viewer.render_2D(image_left_live_ocv,self.image_scale,bodies.object_list, self.obj_param.enable_tracking, self.obj_param.body_format)
+                cv_viewer.render_2D(image_left_live_ocv,self.image_scale,bodies.body_list, self.body_param.enable_tracking, self.body_param.body_format)
                 
                 if is_Recording:
                     svo_position+=1
                     
                 cur_frame={'image_ocv':image_left_live_ocv.copy(),
-                           'bodypoints':bodies.object_list.copy(),
+                           'bodypoints':bodies.body_list.copy(),
                            'position':svo_position}
                 # check if the queue has space
                 if not live_queue.full():
@@ -185,7 +185,7 @@ class ZED_body:
         
         zed_playback = sl.Camera()
         svo_image = sl.Mat()
-        bodies = sl.Objects()
+        bodies = sl.Bodies()
 
 
         is_firstFRAME=True
@@ -218,9 +218,11 @@ class ZED_body:
         # Enable Object Detection and Positional Tracking module
         
         zed_error = zed_playback.enable_positional_tracking(self.positional_tracking_parameters)
-        print(self.obj_param)
 
-        zed_error = zed_playback.enable_object_detection(self.obj_param)
+        print(self.body_param)
+
+        zed_error = zed_playback.enable_body_tracking(self.body_param)
+
         print(zed_error)
         
         if step_by_step is not None:
@@ -237,17 +239,17 @@ class ZED_body:
                     # Read side by side frames stored in the SVO
                     zed_playback.retrieve_image(svo_image,  sl.VIEW.LEFT, sl.MEM.CPU, self.display_resolution)
                     
-                    zed_playback.retrieve_objects(bodies, self.obj_runtime_param)
+                    zed_playback.retrieve_bodies(bodies, self.body_runtime_param)
                     #https://www.stereolabs.com/docs/object-detection/using-object-detection/
-                    # for obj in bodies.object_list:
+                    # for obj in bodies.body_list:
                     #     print("{} {}".format(obj.id, obj.position))
                     image_left_playback_ocv = svo_image.get_data()
-                    cv_viewer.render_2D(image_left_playback_ocv,self.image_scale,bodies.object_list, self.obj_param.enable_tracking, self.obj_param.body_format)
+                    cv_viewer.render_2D(image_left_playback_ocv,self.image_scale,bodies.body_list, self.body_param.enable_tracking, self.body_param.body_format)
                     
                     svo_position = zed_playback.get_svo_position();
                     print(f"POS: {svo_position}")
                     cur_frame={'image_ocv':image_left_playback_ocv.copy(),
-                               'bodypoints':bodies.object_list.copy(),
+                               'bodypoints':bodies.body_list.copy(),
                                'position':svo_position}
                     # check if the queue has space
                     if not playback_queue.full():
@@ -267,7 +269,6 @@ class ZED_body:
                     #is_running=False
                 else:
                     print("SVO reading error")
-                    self.playbackOn.clear()
             
             if is_firstFRAME:
                 if step_by_step is None:                    
@@ -289,7 +290,7 @@ class ZED_body:
 
         # self.image.free(sl.MEM.CPU)
         # Disable modules and close camera
-        self.zed.disable_object_detection()
+        self.zed.disable_body_tracking()
         self.zed.disable_positional_tracking()
         self.zed.close()
         
