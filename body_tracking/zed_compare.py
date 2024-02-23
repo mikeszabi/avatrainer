@@ -130,7 +130,7 @@ while key != 27:  # for esc
         kpts_dict_left=bodyjoints_left.calculate(obj_left)
         kpts_dict_right=bodyjoints_right.calculate(obj_right)
 
-        angle_diff_score=bodyjoints_left.compare_score_bodypoints(obj_left, obj_right, visibility)
+        angle_diff_score=bodyjoints_left.compare_score_bodypoints(obj_left.keypoint, obj_right.keypoint, visibility)
     
 
         #### visualize

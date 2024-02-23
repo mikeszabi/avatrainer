@@ -6,11 +6,6 @@ Created on Wed Jul 12 16:41:52 2023
 @author: mikeszabi
 """
 
-
-
-
-
-
 import pyzed.sl as sl
 
 import numpy as np
@@ -259,9 +254,9 @@ class BodyJoints:
         # ax.set_axis_off()
         self.ax.azim = -90
         self.ax.elev = 90
-        self.ax.set_xticks([])
-        self.ax.set_yticks([])
-        self.ax.set_zticks([])
+        # self.ax.set_xticks([])
+        # self.ax.set_yticks([])
+        # self.ax.set_zticks([])
     
         self.ax.set_xlim3d(-1, 1)
         self.ax.set_xlabel('x')
@@ -321,10 +316,10 @@ class BodyJoints:
         # plt.close()
 
     # obj=bodies.object_list[0]
-    def calculate(self,obj):
+    def calculate(self,body_kpts):
         # ASSUMING ZED body18 model
         
-        self.kpts=obj.keypoint.transpose() #obj2kpts(obj)
+        self.kpts=body_kpts.transpose() #obj2kpts(obj)
         # if len(sys.argv) != 2:
         #     print('Call program with input pose file')
         #     quit()
@@ -350,12 +345,12 @@ class BodyJoints:
         
         return self.kpts_dict
 
-    def compare_score_bodypoints(self,obj_left,obj_right,visibility):
+    def compare_score_bodypoints(self,body_kpts_left,body_kpts_right,visibility):
         # we do not have angles for the endpoints
         self.endpoints=['WRIST','ANKLE']
         
-        kpts_left=self.calculate(obj_left)
-        kpts_right=self.calculate(obj_right)
+        kpts_left=self.calculate(body_kpts_left)
+        kpts_right=self.calculate(body_kpts_right)
         
         angle_diff_score={}
      

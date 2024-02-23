@@ -30,7 +30,7 @@ import ogl_viewer.viewer as gl
 import cv_viewer.tracking_viewer as cv_viewer
 
 filepath=r'../store/kitores_oldal_2_2023_06_23_11_09_27_cut.svo'
-from_file=False
+from_file=True
 
 if __name__ == "__main__":
     print("Running Body Tracking sample ... Press 'q' to quit")

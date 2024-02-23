@@ -10,6 +10,7 @@ import sys
 sys.path.append(r'../measure')
 import json 
 import os
+import numpy as np
 import pyzed.sl as sl
 import cv2
 import cv_viewer.tracking_viewer as cv_viewer
@@ -20,6 +21,7 @@ from body_joint_angles import BodyJoints
 
 
 filepath=r'../store/terpeszzar_front_2023_10_17_14_17_41.svo'
+filepath=r'../store/kitores_oldal_1_2023_06_23_11_08_58_cut.svo'
 visualize_on=True
 
 def main():
@@ -36,8 +38,6 @@ def main():
     init_params.depth_mode = sl.DEPTH_MODE.ULTRA
     init_params.coordinate_system = sl.COORDINATE_SYSTEM.RIGHT_HANDED_Y_UP
     
-    
-
     # filepath = sys.argv[1]
     print("Using SVO file: {0}".format(filepath))
     init_params.svo_real_time_mode = False
@@ -57,7 +57,7 @@ def main():
     body_param = sl.BodyTrackingParameters()
     body_param.enable_tracking = True                # Track people across images flow
     body_param.enable_body_fitting = False            # Smooth skeleton move
-    body_param.detection_model = sl.BODY_TRACKING_MODEL.HUMAN_BODY_FAST 
+    body_param.detection_model = sl.BODY_TRACKING_MODEL.HUMAN_BODY_ACCURATE
     body_param.body_format = sl.BODY_FORMAT.BODY_18  # Choose the BODY_FORMAT you wish to use
 
     # Enable Object Detection module
@@ -111,9 +111,11 @@ def main():
         # Grab a new image
         status = zed.grab()
         
-        obj=bodies.body_list[0]
+        #obj=bodies.body_list[0]
         # kpts_left=joint_angles.calculate(obj)
-        kpts_dict=bodyjoints.calculate(obj)
+        body_kpts=np.asarray(body_json['keypoint'])
+        #body_kpts=obj.keypoint
+        kpts_dict=bodyjoints.calculate(body_kpts) #np.asarray(body_json['keypoint']) == obj.keypoint
         bodyjoints.draw_skeleton_from_joint_coordinates()
         
     print("SVO ends with: {0}".format(status))
