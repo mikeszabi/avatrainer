@@ -20,8 +20,25 @@ import body_keypoints
 from body_joint_angles import BodyJoints
 
 
-filepath=r'../store/terpeszzar_front_2023_10_17_14_17_41.svo'
-filepath=r'../store/kitores_oldal_1_2023_06_23_11_08_58_cut.svo'
+
+dir_path = r'../store/'
+
+# list to store files
+res = []
+# Iterate directory
+for file in os.listdir(dir_path):
+    # check only text files
+    if file.endswith('.svo'):
+        res.append(file)
+print(res)
+
+#filepath=r'../store/kitores_oldal_1_2023_06_23_11_08_58_cut.svo'
+#filepath=r'../store/terdfelhuzas_left_45degree_2023_10_17_14_16_12.svo'
+#filepath=r'../store/labdadobas_1good_2023_10_03_12_17_07.svo'
+#filepath=r'../store/guggolas_1good_2023_10_03_12_17_07.svo'
+#filepath=r'../store/oldalemelés_45degree_2023_10_17_14_13_19.svo'
+filepath=r'../store/karemeles_teljes_45degree_2023_10_17_14_19_42.svo'
+
 visualize_on=True
 
 def main():
@@ -56,7 +73,7 @@ def main():
     
     body_param = sl.BodyTrackingParameters()
     body_param.enable_tracking = True                # Track people across images flow
-    body_param.enable_body_fitting = False            # Smooth skeleton move
+    body_param.enable_body_fitting = True            # Smooth skeleton move
     body_param.detection_model = sl.BODY_TRACKING_MODEL.HUMAN_BODY_ACCURATE
     body_param.body_format = sl.BODY_FORMAT.BODY_18  # Choose the BODY_FORMAT you wish to use
 
@@ -83,6 +100,7 @@ def main():
     
     seq_json=body_keypoints.init_json(os.path.basename(filepath),camera_info,body_param)
     
+    zed.set_svo_position(0)
     status=zed.grab()
     while status==sl.ERROR_CODE.SUCCESS:
         
@@ -105,18 +123,18 @@ def main():
         print(svo_position)
         
         body_json=body_keypoints.get_frame_body_data(body_id,bodies,svo_position)
-        seq_json['seq_data'][svo_position]=body_json
-        
+        if len(body_json['keypoint'])>0:
+            
+            seq_json['seq_data'][svo_position]=body_json
+            #obj=bodies.body_list[0]
+            # kpts_left=joint_angles.calculate(obj)
+            body_kpts=np.asarray(body_json['keypoint'])
+            #body_kpts=obj.keypoint
+            kpts_dict=bodyjoints.calculate(body_kpts) #np.asarray(body_json['keypoint']) == obj.keypoint
+            bodyjoints.draw_skeleton_from_joint_coordinates()
         
         # Grab a new image
         status = zed.grab()
-        
-        #obj=bodies.body_list[0]
-        # kpts_left=joint_angles.calculate(obj)
-        body_kpts=np.asarray(body_json['keypoint'])
-        #body_kpts=obj.keypoint
-        kpts_dict=bodyjoints.calculate(body_kpts) #np.asarray(body_json['keypoint']) == obj.keypoint
-        bodyjoints.draw_skeleton_from_joint_coordinates()
         
     print("SVO ends with: {0}".format(status))
        
@@ -127,7 +145,7 @@ def main():
     zed.disable_object_detection()
     zed.disable_positional_tracking()
     zed.close()
-    
+    image.free(sl.MEM.CPU)
     
     out_filepath=filepath.replace('svo','json')
         
