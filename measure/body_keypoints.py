@@ -32,7 +32,8 @@ import inspect
 import pyzed.sl as sl
 
 
-BODY_18_definitions={'keypoints_to_index' : {'LEFT_HIP': sl.BODY_18_PARTS.LEFT_HIP.value,
+BODY_18_definitions={'keypoints_to_index' : {'NOSE': sl.BODY_18_PARTS.NOSE.value,
+                      'LEFT_HIP': sl.BODY_18_PARTS.LEFT_HIP.value,
                       'RIGHT_HIP': sl.BODY_18_PARTS.RIGHT_HIP.value,
                       'LEFT_KNEE': sl.BODY_18_PARTS.LEFT_KNEE.value,
                       'RIGHT_KNEE': sl.BODY_18_PARTS.RIGHT_KNEE.value, 
@@ -45,7 +46,8 @@ BODY_18_definitions={'keypoints_to_index' : {'LEFT_HIP': sl.BODY_18_PARTS.LEFT_H
                       'LEFT_WRIST': sl.BODY_18_PARTS.LEFT_WRIST.value, 
                       'RIGHT_WRIST': sl.BODY_18_PARTS.RIGHT_WRIST.value, 
                       'NECK':sl.BODY_18_PARTS.NECK.value},
-                     'keypoints_relevancy' : {'LEFT_HIP': 100,
+                     'keypoints_relevancy' : {'NOSE': 0,
+                                           'LEFT_HIP': 100,
                                            'RIGHT_HIP': 100,
                                            'LEFT_KNEE': 100,
                                            'RIGHT_KNEE': 100, 
@@ -55,17 +57,17 @@ BODY_18_definitions={'keypoints_to_index' : {'LEFT_HIP': sl.BODY_18_PARTS.LEFT_H
                                            'RIGHT_SHOULDER': 100, 
                                            'LEFT_ELBOW': 100, 
                                            'RIGHT_ELBOW': 100, 
-                                           'LEFT_WRIST': 0, 
-                                           'RIGHT_WRIST': 0, 
-                                           'NECK':0},
-                     'hierarchy' : {'spine': [],
+                                           'LEFT_WRIST': 100, 
+                                           'RIGHT_WRIST': 100, 
+                                           'NECK':100},
+                     'hierarchy' : {'spine': [],'NOSE': ['NECK', 'spine'],
                                   'LEFT_HIP': ['spine'], 'LEFT_KNEE': ['LEFT_HIP', 'spine'], 'LEFT_ANKLE': ['LEFT_KNEE', 'LEFT_HIP', 'spine'],
                                   'RIGHT_HIP': ['spine'], 'RIGHT_KNEE': ['RIGHT_HIP', 'spine'], 'RIGHT_ANKLE': ['RIGHT_KNEE', 'RIGHT_HIP', 'spine'],
                                   'NECK': ['spine'],
                                   'LEFT_SHOULDER': ['NECK', 'spine'], 'LEFT_ELBOW': ['LEFT_SHOULDER', 'NECK', 'spine'], 'LEFT_WRIST': ['LEFT_ELBOW', 'LEFT_SHOULDER', 'NECK', 'spine'],
                                   'RIGHT_SHOULDER': ['NECK', 'spine'], 'RIGHT_ELBOW': ['RIGHT_SHOULDER', 'NECK', 'spine'], 'RIGHT_WRIST': ['RIGHT_ELBOW', 'RIGHT_SHOULDER', 'NECK', 'spine']
                                  },
-                     'connections' : [['spine', 'LEFT_HIP'], ['LEFT_HIP', 'LEFT_KNEE'], ['LEFT_KNEE', 'LEFT_ANKLE'],
+                     'connections' : [['NOSE','NECK'],['spine', 'LEFT_HIP'], ['LEFT_HIP', 'LEFT_KNEE'], ['LEFT_KNEE', 'LEFT_ANKLE'],
                                      ['spine', 'RIGHT_HIP'], ['RIGHT_HIP', 'RIGHT_KNEE'], ['RIGHT_KNEE', 'RIGHT_ANKLE'],
                                      ['spine', 'NECK'], ['NECK', 'LEFT_SHOULDER'], ['LEFT_SHOULDER', 'LEFT_ELBOW'], ['LEFT_ELBOW', 'LEFT_WRIST'],
                                      ['NECK', 'RIGHT_SHOULDER'], ['RIGHT_SHOULDER', 'RIGHT_ELBOW'], ['RIGHT_ELBOW', 'RIGHT_WRIST']
@@ -107,13 +109,14 @@ def keypoints_to_dict(kpts,keypoints_to_index=BODY_18_definitions['keypoints_to_
         return kpts_dict
 
     kpts_dict = {}
+    kpts_dict['joints']=[]
     for key, k_index in keypoints_to_index.items():
-        # python indexing starts from 0!
-        kpts_dict[key] = kpts[:,k_index]
+        if key not in ['NOSE']:
+            if k_index<kpts.shape[1]:
+                kpts_dict[key] = kpts[:,k_index]
+                kpts_dict['joints'].append(key)
         
     add_spine(kpts_dict)
-
-    kpts_dict['joints'] = list(keypoints_to_index.keys())
     kpts_dict['joints'].append('spine')
     
     kpts_dict['root_joint'] = 'spine'

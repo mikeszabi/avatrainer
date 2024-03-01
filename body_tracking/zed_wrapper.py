@@ -54,8 +54,8 @@ class ZED_body:
         self.positional_tracking_parameters.set_as_static = True
         
         self.body_param = sl.BodyTrackingParameters()
-        self.body_param.enable_body_fitting = True            # Smooth skeleton move
         self.body_param.enable_tracking = False                # Track people across images flow
+        self.body_param.enable_body_fitting = True            # Smooth skeleton move
         self.body_param.detection_model = sl.BODY_TRACKING_MODEL.HUMAN_BODY_ACCURATE
         self.body_param.body_format = sl.BODY_FORMAT.BODY_18  # Choose the BODY_FORMAT you wish to use
         
@@ -64,7 +64,7 @@ class ZED_body:
         self.recordingParameters.video_filename = os.path.join(self.output_path,'test.svo')
     
         self.body_runtime_param = sl.BodyTrackingRuntimeParameters()
-        self.body_runtime_param.detection_confidence_threshold = 40
+        self.body_runtime_param.detection_confidence_threshold = 25
     
 
         # 2D viewer utilities
@@ -177,7 +177,9 @@ class ZED_body:
 
                 
         live_image.free(sl.MEM.CPU)    
-        # zed_live.close()   
+        zed_live.disable_body_tracking()
+        zed_live.disable_positional_tracking()
+        zed_live.close() 
             
         
         
@@ -283,6 +285,8 @@ class ZED_body:
                 
                 
         svo_image.free(sl.MEM.CPU)
+        zed_playback.disable_body_tracking()
+        zed_playback.disable_positional_tracking()
         zed_playback.close()
 
     

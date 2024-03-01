@@ -33,11 +33,11 @@ for file in os.listdir(dir_path):
 print(res)
 
 #filepath=r'../store/kitores_oldal_1_2023_06_23_11_08_58_cut.svo'
-#filepath=r'../store/terdfelhuzas_left_45degree_2023_10_17_14_16_12.svo'
+filepath=r'../store/terdfelhuzas_left_45degree_2023_10_17_14_16_12.svo'
 #filepath=r'../store/labdadobas_1good_2023_10_03_12_17_07.svo'
-#filepath=r'../store/guggolas_1good_2023_10_03_12_17_07.svo'
-#filepath=r'../store/oldalemelés_45degree_2023_10_17_14_13_19.svo'
-filepath=r'../store/karemeles_teljes_45degree_2023_10_17_14_19_42.svo'
+# filepath=r'../store/guggolas_1good_2023_10_03_12_17_07.svo'
+# filepath=r'../store/oldalemelés_45degree_2023_10_17_14_13_19.svo'
+# filepath=r'../store/karemeles_teljes_45degree_2023_10_17_14_19_42.svo'
 
 visualize_on=True
 
@@ -72,7 +72,7 @@ def main():
     zed.enable_positional_tracking(positional_tracking_parameters)
     
     body_param = sl.BodyTrackingParameters()
-    body_param.enable_tracking = True                # Track people across images flow
+    body_param.enable_tracking = False                # Track people across images flow
     body_param.enable_body_fitting = True            # Smooth skeleton move
     body_param.detection_model = sl.BODY_TRACKING_MODEL.HUMAN_BODY_ACCURATE
     body_param.body_format = sl.BODY_FORMAT.BODY_18  # Choose the BODY_FORMAT you wish to use
@@ -81,7 +81,8 @@ def main():
     zed.enable_body_tracking(body_param)
 
     body_runtime_param = sl.BodyTrackingRuntimeParameters()
-    body_runtime_param.detection_confidence_threshold = 40
+    body_runtime_param.detection_confidence_threshold = 25
+    body_runtime_param.skeleton_smoothing=True
 
     # Get ZED camera information
     camera_info = zed.get_camera_information()
@@ -112,26 +113,30 @@ def main():
             # fixing first seen body id!
             body_id=bodies.body_list[0].id
 
+  
+        svo_position = zed.get_svo_position()
+        print(svo_position)
+        
+        
         # Update OCV view
         if visualize_on:
+            body_json=body_keypoints.get_frame_body_data(body_id,bodies,svo_position)
+            if len(body_json['keypoint'])>0:
+                
+                seq_json['seq_data'][svo_position]=body_json
+                #obj=bodies.body_list[0]
+                # kpts_left=joint_angles.calculate(obj)
+                body_kpts=np.asarray(body_json['keypoint'])
+                #body_kpts=obj.keypoint
+                kpts_dict=bodyjoints.calculate(body_kpts) #np.asarray(body_json['keypoint']) == obj.keypoint
+                bodyjoints.draw_skeleton_from_joint_coordinates()
+            
+            
             image_left_ocv = image.get_data()
             cv_viewer.render_2D(image_left_ocv,image_scale,bodies.body_list, body_param.enable_tracking, body_param.body_format)
             cv2.imshow("ZED | 2D View", image_left_ocv)
             c=cv2.waitKey(10)
-        
-        svo_position = zed.get_svo_position()
-        print(svo_position)
-        
-        body_json=body_keypoints.get_frame_body_data(body_id,bodies,svo_position)
-        if len(body_json['keypoint'])>0:
-            
-            seq_json['seq_data'][svo_position]=body_json
-            #obj=bodies.body_list[0]
-            # kpts_left=joint_angles.calculate(obj)
-            body_kpts=np.asarray(body_json['keypoint'])
-            #body_kpts=obj.keypoint
-            kpts_dict=bodyjoints.calculate(body_kpts) #np.asarray(body_json['keypoint']) == obj.keypoint
-            bodyjoints.draw_skeleton_from_joint_coordinates()
+           
         
         # Grab a new image
         status = zed.grab()

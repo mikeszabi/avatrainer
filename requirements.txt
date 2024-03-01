@@ -1,0 +1,6 @@
+cython 
+numpy 
+opencv-python
+matplotlib
+scipy
+pyopengl
