@@ -29,7 +29,7 @@ import cv2
 
 def main():
 
-    filepath_1=r'../store/terdfelhuzas_left_45degree_2023_10_17_14_16_12.svo'
+    filepath=r'../store/karemeles_teljes_45degree_2023_10_17_14_19_42.svo'
     
     
     bodyjoints_cur=BodyJoints()    
@@ -50,7 +50,7 @@ def main():
     playbackEvent_cur.set()
     playbackStartEvent_cur.clear()
     thread_cur = threading.Thread(target=zb_cur.playback, args=((queue_cur,playbackEvent_cur,playbackStartEvent_cur,
-                                                                   filepath_1,step_by_step,False)))
+                                                                   filepath,step_by_step,False)))
     
     
     thread_cur.start()  

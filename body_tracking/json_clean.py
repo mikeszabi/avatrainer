@@ -31,19 +31,19 @@ def save_json(out_json_filepath,seq_json,new_points):
     seq_json_new['detection_model']=seq_json['detection_model']
     seq_json_new['body_model']=seq_json['body_model']
     seq_json_new['body_keypoint_definitions']=seq_json['body_keypoint_definitions']
-    seq_json_new['body_keypoint_definitions']['keypoints_relevancy']['LEFT_HIP']=100
-    seq_json_new['body_keypoint_definitions']['keypoints_relevancy']['RIGHT_HIP']=100
-    seq_json_new['body_keypoint_definitions']['keypoints_relevancy']['LEFT_KNEE']=100
-    seq_json_new['body_keypoint_definitions']['keypoints_relevancy']['RIGHT_KNEE']=100
-    seq_json_new['body_keypoint_definitions']['keypoints_relevancy']['LEFT_ANKLE']=100
-    seq_json_new['body_keypoint_definitions']['keypoints_relevancy']['RIGHT_ANKLE']=100
+    seq_json_new['body_keypoint_definitions']['keypoints_relevancy']['LEFT_HIP']=0
+    seq_json_new['body_keypoint_definitions']['keypoints_relevancy']['RIGHT_HIP']=0
+    seq_json_new['body_keypoint_definitions']['keypoints_relevancy']['LEFT_KNEE']=0
+    seq_json_new['body_keypoint_definitions']['keypoints_relevancy']['RIGHT_KNEE']=0
+    seq_json_new['body_keypoint_definitions']['keypoints_relevancy']['LEFT_ANKLE']=0
+    seq_json_new['body_keypoint_definitions']['keypoints_relevancy']['RIGHT_ANKLE']=0
     seq_json_new['body_keypoint_definitions']['keypoints_relevancy']['LEFT_SHOULDER']=100
     seq_json_new['body_keypoint_definitions']['keypoints_relevancy']['RIGHT_SHOULDER']=100
     seq_json_new['body_keypoint_definitions']['keypoints_relevancy']['LEFT_ELBOW']=100
     seq_json_new['body_keypoint_definitions']['keypoints_relevancy']['RIGHT_ELBOW']=100
-    seq_json_new['body_keypoint_definitions']['keypoints_relevancy']['LEFT_WRIST']=0
-    seq_json_new['body_keypoint_definitions']['keypoints_relevancy']['RIGHT_WRIST']=0
-    seq_json_new['body_keypoint_definitions']['keypoints_relevancy']['NECK']=0
+    seq_json_new['body_keypoint_definitions']['keypoints_relevancy']['LEFT_WRIST']=100
+    seq_json_new['body_keypoint_definitions']['keypoints_relevancy']['RIGHT_WRIST']=100
+    seq_json_new['body_keypoint_definitions']['keypoints_relevancy']['NECK']=100
     seq_json_new['body_keypoint_definitions']['keypoints_relevancy']['NOSE']=0
     
     seq_json_new['seq_data']={}
@@ -104,11 +104,11 @@ def circular_moving_average(data, window_size):
 
 
 #json_file_path=r'../store/kitores_oldal_1_2023_06_23_11_08_58_cut.json'
-json_file_path=r'../store/terdfelhuzas_left_45degree_2023_10_17_14_16_12.json'
+#json_file_path=r'../store/terdfelhuzas_left_45degree_2023_10_17_14_16_12.json'
 #json_file_path=r'../store/labdadobas_1good_2023_10_03_12_17_07.json'
 #json_file_path=r'../store/guggolas_1good_2023_10_03_12_17_07.json'
 #json_file_path=r'../store/oldalemelés_45degree_2023_10_17_14_13_19.json'
-#json_file_path=r'../store/karemeles_teljes_45degree_2023_10_17_14_19_42.json'
+json_file_path=r'../store/karemeles_teljes_45degree_2023_10_17_14_19_42.json'
 
 
 visualize_on=True
@@ -122,7 +122,7 @@ seq_json_clean=seq_json.copy()
 
 frame_ids=[int(i) for i in seq_json['seq_data'].keys()]
 
-# frame_ids=frame_ids[:60]
+# frame_ids=frame_ids[:26]+frame_ids[30:]
 
 
 n_frames=np.max(frame_ids)+1

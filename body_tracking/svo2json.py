@@ -33,11 +33,11 @@ for file in os.listdir(dir_path):
 print(res)
 
 #filepath=r'../store/kitores_oldal_1_2023_06_23_11_08_58_cut.svo'
-filepath=r'../store/terdfelhuzas_left_45degree_2023_10_17_14_16_12.svo'
+#filepath=r'../store/terdfelhuzas_left_45degree_2023_10_17_14_16_12.svo'
 #filepath=r'../store/labdadobas_1good_2023_10_03_12_17_07.svo'
-# filepath=r'../store/guggolas_1good_2023_10_03_12_17_07.svo'
-# filepath=r'../store/oldalemelés_45degree_2023_10_17_14_13_19.svo'
-# filepath=r'../store/karemeles_teljes_45degree_2023_10_17_14_19_42.svo'
+#filepath=r'../store/guggolas_1good_2023_10_03_12_17_07.svo'
+#filepath=r'../store/oldalemelés_45degree_2023_10_17_14_13_19.svo'
+filepath=r'../store/karemeles_teljes_45degree_2023_10_17_14_19_42.svo'
 
 visualize_on=True
 
