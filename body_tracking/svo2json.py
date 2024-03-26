@@ -21,7 +21,7 @@ from body_joint_angles import BodyJoints
 
 
 
-dir_path = r'../store/'
+dir_path = r'../store/20240325'
 
 # list to store files
 res = []
@@ -37,7 +37,7 @@ print(res)
 #filepath=r'../store/labdadobas_1good_2023_10_03_12_17_07.svo'
 #filepath=r'../store/guggolas_1good_2023_10_03_12_17_07.svo'
 #filepath=r'../store/oldalemelés_45degree_2023_10_17_14_13_19.svo'
-filepath=r'../store/karemeles_teljes_45degree_2023_10_17_14_19_42.svo'
+filepath=os.path.join(dir_path,'complex1_HD1080_SN30195290_12-40-11.svo')
 
 visualize_on=True
 

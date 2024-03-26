@@ -31,12 +31,12 @@ def save_json(out_json_filepath,seq_json,new_points):
     seq_json_new['detection_model']=seq_json['detection_model']
     seq_json_new['body_model']=seq_json['body_model']
     seq_json_new['body_keypoint_definitions']=seq_json['body_keypoint_definitions']
-    seq_json_new['body_keypoint_definitions']['keypoints_relevancy']['LEFT_HIP']=0
-    seq_json_new['body_keypoint_definitions']['keypoints_relevancy']['RIGHT_HIP']=0
-    seq_json_new['body_keypoint_definitions']['keypoints_relevancy']['LEFT_KNEE']=0
-    seq_json_new['body_keypoint_definitions']['keypoints_relevancy']['RIGHT_KNEE']=0
-    seq_json_new['body_keypoint_definitions']['keypoints_relevancy']['LEFT_ANKLE']=0
-    seq_json_new['body_keypoint_definitions']['keypoints_relevancy']['RIGHT_ANKLE']=0
+    seq_json_new['body_keypoint_definitions']['keypoints_relevancy']['LEFT_HIP']=100
+    seq_json_new['body_keypoint_definitions']['keypoints_relevancy']['RIGHT_HIP']=100
+    seq_json_new['body_keypoint_definitions']['keypoints_relevancy']['LEFT_KNEE']=100
+    seq_json_new['body_keypoint_definitions']['keypoints_relevancy']['RIGHT_KNEE']=100
+    seq_json_new['body_keypoint_definitions']['keypoints_relevancy']['LEFT_ANKLE']=100
+    seq_json_new['body_keypoint_definitions']['keypoints_relevancy']['RIGHT_ANKLE']=100
     seq_json_new['body_keypoint_definitions']['keypoints_relevancy']['LEFT_SHOULDER']=100
     seq_json_new['body_keypoint_definitions']['keypoints_relevancy']['RIGHT_SHOULDER']=100
     seq_json_new['body_keypoint_definitions']['keypoints_relevancy']['LEFT_ELBOW']=100
@@ -52,10 +52,14 @@ def save_json(out_json_filepath,seq_json,new_points):
         is_inserted_frame=True
         seq_json_new['seq_data'][str(svo_pos)]={}
         while True:
-            if seq_json['seq_data'][str(real_svo_pos)]['svo_position']==svo_pos:
-                is_inserted_frame=False
+            if str(real_svo_pos) in seq_json['seq_data'].keys():
+                if seq_json['seq_data'][str(real_svo_pos)]['svo_position']==svo_pos:
+                    is_inserted_frame=False
+                    break
+                real_svo_pos+=1
+            else:
+                is_inserted_frame=True
                 break
-            real_svo_pos+=1
         seq_json_new['is_inserted_frame']=is_inserted_frame
         if is_inserted_frame:
             seq_json_new['seq_data'][str(svo_pos)]['svo_position']=svo_pos
@@ -103,12 +107,9 @@ def circular_moving_average(data, window_size):
     return moving_avgs
 
 
-#json_file_path=r'../store/kitores_oldal_1_2023_06_23_11_08_58_cut.json'
-#json_file_path=r'../store/terdfelhuzas_left_45degree_2023_10_17_14_16_12.json'
-#json_file_path=r'../store/labdadobas_1good_2023_10_03_12_17_07.json'
-#json_file_path=r'../store/guggolas_1good_2023_10_03_12_17_07.json'
-#json_file_path=r'../store/oldalemelés_45degree_2023_10_17_14_13_19.json'
-json_file_path=r'../store/karemeles_teljes_45degree_2023_10_17_14_19_42.json'
+dir_path = r'../store/20240325'
+
+json_file_path=os.path.join(dir_path,'complex1_HD1080_SN30195290_12-40-11.json')
 
 
 visualize_on=True
@@ -166,10 +167,10 @@ for body_joint in sorted_body_joints:
     
     
     if body_joint=="RIGHT_ANKLE":
-        y_start_right_ankle=np.mean(y_coords[0:5])
+        y_start_right_ankle=np.nanmean(y_coords[0:5])
         # y_shift_right=y_coords-y_start_right_ankle
     if body_joint=="LEFT_ANKLE":
-        y_start_left_ankle=np.mean(y_coords[0:5])
+        y_start_left_ankle=np.nanmean(y_coords[0:5])
         # y_shift_left=y_coords-y_start_left_ankle
 
 
@@ -197,7 +198,7 @@ for body_joint in sorted_body_joints:
     
     filled_points[body_joint]=[x_filled,y_filled,z_filled]
 
-out_json_filepath=os.path.join(r'../store',os.path.splitext(os.path.basename(json_file_path))[0]+'_filled.json')
+out_json_filepath=os.path.join(dir_path,os.path.splitext(os.path.basename(json_file_path))[0]+'_filled.json')
 save_json(out_json_filepath,seq_json,filled_points)
 
 #############################################################
@@ -240,29 +241,29 @@ for body_joint in sorted_body_joints:
     plt.show()
 
 
-body_joint='NOSE'
+# body_joint='NOSE'
 
-x_filled,y_filled,z_filled = filled_points[body_joint]
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
-ax.azim = -90
-ax.elev = 90
-ax.set_xlabel('X')
-ax.set_ylabel('Y')
-ax.set_zlabel('Z')
-# ax.set_xlim(-0.75,0.75)
-# ax.set_ylim(-1,1)
-# ax.set_zlim(-3, -2)
-ax.set_title(body_joint)
-interactive_curve = Interactive3DCurve(fig, ax, x_filled, y_filled, z_filled)
-plt.show()
+# x_filled,y_filled,z_filled = filled_points[body_joint]
+# fig = plt.figure()
+# ax = fig.add_subplot(111, projection='3d')
+# ax.azim = -90
+# ax.elev = 90
+# ax.set_xlabel('X')
+# ax.set_ylabel('Y')
+# ax.set_zlabel('Z')
+# # ax.set_xlim(-0.75,0.75)
+# # ax.set_ylim(-1,1)
+# # ax.set_zlim(-3, -2)
+# ax.set_title(body_joint)
+# interactive_curve = Interactive3DCurve(fig, ax, x_filled, y_filled, z_filled)
+# plt.show()
 
-filled_points[body_joint]=[interactive_curve.x,interactive_curve.y,interactive_curve.z]
+# filled_points[body_joint]=[interactive_curve.x,interactive_curve.y,interactive_curve.z]
 
 
 
-out_json_filepath=os.path.join(r'../store',os.path.splitext(os.path.basename(json_file_path))[0]+'_fixed.json')
-save_json(out_json_filepath,seq_json,filled_points)
+# out_json_filepath=os.path.join(r'../store',os.path.splitext(os.path.basename(json_file_path))[0]+'_fixed.json')
+# save_json(out_json_filepath,seq_json,filled_points)
 
 ################ B-spline smoothing
 # for body_joint in sorted_body_joints:   
@@ -303,7 +304,7 @@ for body_joint in sorted_body_joints:
     z_smooth= circular_moving_average(z_filled, window_size)
     smoothed_points[body_joint]=[x_smooth,y_smooth,z_smooth]
 
-out_json_filepath=os.path.join(r'../store',os.path.splitext(os.path.basename(json_file_path))[0]+'_smooth.json')
+out_json_filepath=os.path.join(dir_path,os.path.splitext(os.path.basename(json_file_path))[0]+'_smooth.json')
 save_json(out_json_filepath,seq_json,smoothed_points)
 
 ##############################################################################

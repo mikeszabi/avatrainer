@@ -5,6 +5,7 @@ Created on Mon Feb 26 17:48:11 2024
 
 @author: szabi
 """
+import os
 import sys
 sys.path.append(r'../measure')
 import json 
@@ -14,12 +15,11 @@ import numpy as np
 #import joint_angles
 from body_joint_angles import BodyJoints
 
-#x fixed_json_file_path=r'../store/kitores_oldal_1_2023_06_23_11_08_58_cut_smooth.json'
-#fixed_json_file_path=r'../store/terdfelhuzas_left_45degree_2023_10_17_14_16_12_smooth.json'
-#fixed_json_file_path=r'../store/labdadobas_1good_2023_10_03_12_17_07_smooth.json'
-#fixed_json_file_path=r'../store/guggolas_1good_2023_10_03_12_17_07_smooth.json'
-#fixed_json_file_path=r'../store/oldalemelés_45degree_2023_10_17_14_13_19_smooth.json'
-fixed_json_file_path=r'../store/karemeles_teljes_45degree_2023_10_17_14_19_42.json'
+dir_path = r'../store/20240325'
+
+fixed_json_file_path=os.path.join(dir_path,'complex1_HD1080_SN30195290_12-40-11_smooth.json')
+
+
 
 bodyjoints=BodyJoints()
 
