@@ -1,0 +1,66 @@
+display_avatar.js:109 Node: RootNode, Type: Object3D
+display_avatar.js:109 Node: SimpleCharacter, Type: Object3D
+display_avatar.js:109 Node: Armature001, Type: Object3D
+display_avatar.js:109 Node: Object_6, Type: Object3D
+display_avatar.js:109 Node: _rootJoint, Type: Bone
+display_avatar.js:110 Bone: _rootJoint
+display_avatar.js:109 Node: mixamorigHips_01, Type: Bone
+display_avatar.js:110 Bone: mixamorigHips_01
+display_avatar.js:109 Node: mixamorigSpine_02, Type: Bone
+display_avatar.js:110 Bone: mixamorigSpine_02
+display_avatar.js:109 Node: mixamorigSpine1_03, Type: Bone
+display_avatar.js:110 Bone: mixamorigSpine1_03
+display_avatar.js:109 Node: mixamorigSpine2_04, Type: Bone
+display_avatar.js:110 Bone: mixamorigSpine2_04
+display_avatar.js:109 Node: mixamorigNeck_05, Type: Bone
+display_avatar.js:110 Bone: mixamorigNeck_05
+display_avatar.js:109 Node: mixamorigHead_06, Type: Bone
+display_avatar.js:110 Bone: mixamorigHead_06
+display_avatar.js:109 Node: mixamorigHeadTop_End_07, Type: Bone
+display_avatar.js:110 Bone: mixamorigHeadTop_End_07
+display_avatar.js:109 Node: mixamorigHeadTop_End_end_026, Type: Bone
+display_avatar.js:110 Bone: mixamorigHeadTop_End_end_026
+display_avatar.js:109 Node: mixamorigLeftShoulder_08, Type: Bone
+display_avatar.js:110 Bone: mixamorigLeftShoulder_08
+display_avatar.js:109 Node: mixamorigLeftArm_09, Type: Bone
+display_avatar.js:110 Bone: mixamorigLeftArm_09
+display_avatar.js:109 Node: mixamorigLeftForeArm_010, Type: Bone
+display_avatar.js:110 Bone: mixamorigLeftForeArm_010
+display_avatar.js:109 Node: mixamorigLeftHand_011, Type: Bone
+display_avatar.js:110 Bone: mixamorigLeftHand_011
+display_avatar.js:109 Node: mixamorigLeftHand_end_027, Type: Bone
+display_avatar.js:110 Bone: mixamorigLeftHand_end_027
+display_avatar.js:109 Node: mixamorigRightShoulder_012, Type: Bone
+display_avatar.js:110 Bone: mixamorigRightShoulder_012
+display_avatar.js:109 Node: mixamorigRightArm_013, Type: Bone
+display_avatar.js:110 Bone: mixamorigRightArm_013
+display_avatar.js:109 Node: mixamorigRightForeArm_014, Type: Bone
+display_avatar.js:110 Bone: mixamorigRightForeArm_014
+display_avatar.js:109 Node: mixamorigRightHand_015, Type: Bone
+display_avatar.js:110 Bone: mixamorigRightHand_015
+display_avatar.js:109 Node: mixamorigRightHand_end_028, Type: Bone
+display_avatar.js:110 Bone: mixamorigRightHand_end_028
+display_avatar.js:109 Node: mixamorigLeftUpLeg_016, Type: Bone
+display_avatar.js:110 Bone: mixamorigLeftUpLeg_016
+display_avatar.js:109 Node: mixamorigLeftLeg_017, Type: Bone
+display_avatar.js:110 Bone: mixamorigLeftLeg_017
+display_avatar.js:109 Node: mixamorigLeftFoot_018, Type: Bone
+display_avatar.js:110 Bone: mixamorigLeftFoot_018
+display_avatar.js:109 Node: mixamorigLeftToeBase_019, Type: Bone
+display_avatar.js:110 Bone: mixamorigLeftToeBase_019
+display_avatar.js:109 Node: mixamorigLeftToe_End_020, Type: Bone
+display_avatar.js:110 Bone: mixamorigLeftToe_End_020
+display_avatar.js:109 Node: mixamorigLeftToe_End_end_029, Type: Bone
+display_avatar.js:110 Bone: mixamorigLeftToe_End_end_029
+display_avatar.js:109 Node: mixamorigRightUpLeg_021, Type: Bone
+display_avatar.js:110 Bone: mixamorigRightUpLeg_021
+display_avatar.js:109 Node: mixamorigRightLeg_022, Type: Bone
+display_avatar.js:110 Bone: mixamorigRightLeg_022
+display_avatar.js:109 Node: mixamorigRightFoot_023, Type: Bone
+display_avatar.js:110 Bone: mixamorigRightFoot_023
+display_avatar.js:109 Node: mixamorigRightToeBase_024, Type: Bone
+display_avatar.js:110 Bone: mixamorigRightToeBase_024
+display_avatar.js:109 Node: mixamorigRightToe_End_025, Type: Bone
+display_avatar.js:110 Bone: mixamorigRightToe_End_025
+display_avatar.js:109 Node: mixamorigRightToe_End_end_00, Type: Bone
+display_avatar.js:110 Bone: mixamorigRightToe_End_end_00
