@@ -80,7 +80,7 @@ if uploaded_file:
 
         if st.session_state.json_output_path:
             st.markdown("### JSON Visualizer")
-            st.markdown(f'<iframe src="http://localhost:8001/visualizer.html" width="100%" height="420"></iframe>', unsafe_allow_html=True)
+            st.markdown(f'<iframe src="http://localhost:5500/web/public/visualizer.html" width="100%" height="420"></iframe>', unsafe_allow_html=True)
             with open(st.session_state.json_output_path, "rb") as f:
                 st.download_button(
                     "Download JSON",
