@@ -34,6 +34,7 @@ image = sl.Mat()
 
 processor.zed.set_svo_position(0)
 
+###############################################
 # Initialize Video Writer
 frame_width, frame_height = display_resolution.width, display_resolution.height
 fps = 15  # Adjust based on your input video
@@ -46,6 +47,8 @@ out = cv2.VideoWriter(
         15,
         (frame_width, frame_height)
     )
+
+##############################################x
 
 while processor.zed.grab() == sl.ERROR_CODE.SUCCESS:
     # Retrieve left image

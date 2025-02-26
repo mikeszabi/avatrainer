@@ -24,7 +24,9 @@ class SVOProcessor:
             self.logger.error("Failed to initialize ZED camera.")
             return
         
-        self.body_param, self.body_runtime_param = self._init_body_tracking()
+        self.body_format = sl.BODY_FORMAT.BODY_18
+
+        self.body_param, self.body_runtime_param = self._init_body_tracking(body_format=self.body_format)
         self.camera_info = self._init_camera_info()
         self.logger.info("Initialization complete.")
 

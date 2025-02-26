@@ -9,7 +9,8 @@ Created on Wed Jul 12 16:41:52 2023
 import pyzed.sl as sl
 
 import numpy as np
-# import sys
+import sys
+sys.path.append(r'../zedtools')
 import utils
 import body_keypoints
 import matplotlib.pyplot as plt
@@ -334,7 +335,7 @@ class BodyJoints:
         #     #     kpts[:,kpt_num] = R @ kpts[:,kpt_num]
         # kpts=np.dot(R_y,kpts)
         
-        self.kpts_dict=body_keypoints.keypoints_to_dict(self.kpts)
+        self.kpts_dict=body_keypoints.keypoints_18_to_dict(self.kpts)
         self.kpts_dict['hierarchy'] = body_keypoints.BODY_18_definitions['hierarchy']
     
         # filtered_kpts = median_filter(self.kpts_dict)

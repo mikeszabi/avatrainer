@@ -6,8 +6,12 @@ Created on Sat Oct 21 16:33:29 2023
 @author: itqs
 """
 
+
+##### TODO: https://www.stereolabs.com/docs/body-tracking/using-body-tracking
+
 import sys
 sys.path.append(r'../measure')
+sys.path.append(r'../zedtools')
 import json 
 import os
 import numpy as np
@@ -17,11 +21,11 @@ import cv_viewer.tracking_viewer as cv_viewer
 
 import body_keypoints
 #import joint_angles
-from body_joint_angles import BodyJoints
+#from body_joint_angles import BodyJoints
 
 
 
-dir_path = r'../store/20240325'
+dir_path = r'../store/'
 
 # list to store files
 res = []
@@ -37,13 +41,13 @@ print(res)
 #filepath=r'../store/labdadobas_1good_2023_10_03_12_17_07.svo'
 #filepath=r'../store/guggolas_1good_2023_10_03_12_17_07.svo'
 #filepath=r'../store/oldalemelés_45degree_2023_10_17_14_13_19.svo'
-filepath=os.path.join(dir_path,'complex1_HD1080_SN30195290_12-40-11.svo')
+filepath=os.path.join(dir_path,'biceps_cur_1_2023_06_23_11_16_25_cut.svo')
 
 visualize_on=True
 
 def main():
 
-    bodyjoints=BodyJoints()    
+    #bodyjoints=BodyJoints()    
 
     # Create a Camera object
     zed = sl.Camera()
@@ -75,7 +79,7 @@ def main():
     body_param.enable_tracking = False                # Track people across images flow
     body_param.enable_body_fitting = True            # Smooth skeleton move
     body_param.detection_model = sl.BODY_TRACKING_MODEL.HUMAN_BODY_ACCURATE
-    body_param.body_format = sl.BODY_FORMAT.BODY_18  # Choose the BODY_FORMAT you wish to use
+    body_param.body_format = sl.BODY_FORMAT.BODY_38 #sl.BODY_FORMAT.BODY_18  # Choose the BODY_FORMAT you wish to use
 
     # Enable Object Detection module
     zed.enable_body_tracking(body_param)
@@ -128,8 +132,8 @@ def main():
                 # kpts_left=joint_angles.calculate(obj)
                 body_kpts=np.asarray(body_json['keypoint'])
                 #body_kpts=obj.keypoint
-                kpts_dict=bodyjoints.calculate(body_kpts) #np.asarray(body_json['keypoint']) == obj.keypoint
-                bodyjoints.draw_skeleton_from_joint_coordinates()
+                # kpts_dict=bodyjoints.calculate(body_kpts) #np.asarray(body_json['keypoint']) == obj.keypoint
+                # bodyjoints.draw_skeleton_from_joint_coordinates()
             
             
             image_left_ocv = image.get_data()
