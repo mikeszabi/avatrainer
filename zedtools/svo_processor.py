@@ -117,7 +117,7 @@ class SVOProcessor:
 
             # Initialize Video Writer
             frame_width, frame_height = display_resolution.width, display_resolution.height
-            fps = 15  # Adjust based on your input video
+            fps = 30  # Adjust based on your input video
             #fourcc = cv2.VideoWriter_fourcc(*"mp4v")  # Codec for MP4 format
             fourcc = cv2.VideoWriter_fourcc(*"mp4v")  # H.264 codec
 
