@@ -12,10 +12,6 @@ st.set_page_config(
     layout="wide"
 )
 
-sys.path.append(r'../zedtools')
-#from svo_processor import SVOProcessor
-
-
 def get_video_html(video_path):
     """Generate HTML to embed video directly"""
     with open(video_path, "rb") as video_file:
@@ -68,21 +64,6 @@ if 'static_served' not in st.session_state:
 # Add server status display
 server_status = "🟢 Running" if check_server_running(8001) else "🔴 Stopped"
 st.sidebar.markdown(f"### Server Status: {server_status}")
-
-# def get_available_exercises():
-#     """Get list of JSON files in the json directory"""
-#     return [f.stem for f in DIRS['json'].glob('*.json')]
-
-# def process_svo(file, process_type="video"):
-#     """Process SVO file and return output path"""
-#     try:
-#         # Convert Path to string for processor
-#         processor = SVOProcessor(str(file))
-#         return processor.svo2video()
-
-#     except Exception as e:
-#         st.error(f"Processing failed: {e}")
-#         return None
 
 def get_available_videos():
     """Get list of SVO files in the video directory"""
